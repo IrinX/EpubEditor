@@ -63,7 +63,7 @@ fun MetadataEditorTab(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             text = stringResource(R.string.editor_metadata),

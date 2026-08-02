@@ -90,7 +90,7 @@ fun HtmlEditorTab(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             text = stringResource(R.string.editor_text),

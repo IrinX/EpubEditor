@@ -97,7 +97,7 @@ fun AssetManagerTab(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(start = 16.dp, top = 16.dp, end = 16.dp)
+            .padding(horizontal = 16.dp)
     ) {
         LazyColumn(
             modifier = Modifier
@@ -154,7 +154,10 @@ fun AssetManagerTab(
             exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut(),
             modifier = Modifier.align(Alignment.BottomEnd)
         ) {
-            FloatingActionButton(onClick = { addLauncher.launch("*/*") }) {
+            FloatingActionButton(
+                onClick = { addLauncher.launch("*/*") },
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.assets_add)
