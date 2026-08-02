@@ -97,7 +97,7 @@ fun AssetManagerTab(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, top = 16.dp)
     ) {
         LazyColumn(
             modifier = Modifier
