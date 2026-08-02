@@ -19,15 +19,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -46,13 +53,17 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.epubeditor.R
 import com.example.epubeditor.data.epub.model.EpubBook
 import com.example.epubeditor.ui.components.LoadingOverlay
+import com.example.epubeditor.ui.screens.home.DirectoryBook
 import com.example.epubeditor.ui.screens.settings.SettingsScreen
 import com.example.epubeditor.ui.screens.settings.SettingsViewModel
 import java.io.File
@@ -138,8 +149,14 @@ fun HomeScreen(
         ) {
             when (selectedTab) {
                 0 -> DirectoryTab(
-                    files = uiState.directoryFiles,
-                    onOpenFile = { file -> viewModel.openFromFile(file) }
+                    books = uiState.directoryBooks,
+                    selectionMode = uiState.selectionMode,
+                    selectedIds = uiState.selectedIds,
+                    onOpenBook = { book -> viewModel.openFromFile(book.file) },
+                    onSetSelectionMode = viewModel::setSelectionMode,
+                    onToggleSelection = viewModel::toggleSelection,
+                    onSelectAll = viewModel::selectAll,
+                    onDeleteSelected = viewModel::deleteSelectedBooks
                 )
                 1 -> SettingsScreen(viewModel = settingsViewModel)
             }
@@ -186,18 +203,61 @@ fun HomeScreen(
 
 @Composable
 private fun DirectoryTab(
-    files: List<File>,
-    onOpenFile: (File) -> Unit
+    books: List<DirectoryBook>,
+    selectionMode: Boolean,
+    selectedIds: Set<String>,
+    onOpenBook: (DirectoryBook) -> Unit,
+    onSetSelectionMode: (Boolean) -> Unit,
+    onToggleSelection: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onDeleteSelected: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = stringResource(R.string.home_directory_title),
-            style = MaterialTheme.typography.titleLarge,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Text(
+                text = stringResource(R.string.home_directory_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f)
+            )
+            if (books.isNotEmpty()) {
+                if (selectionMode) {
+                    IconButton(onClick = onSelectAll) {
+                        Icon(
+                            imageVector = Icons.Default.SelectAll,
+                            contentDescription = stringResource(R.string.home_select_all)
+                        )
+                    }
+                    IconButton(
+                        onClick = onDeleteSelected,
+                        enabled = selectedIds.isNotEmpty()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.delete)
+                        )
+                    }
+                    IconButton(onClick = { onSetSelectionMode(false) }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.cancel)
+                        )
+                    }
+                } else {
+                    IconButton(onClick = { onSetSelectionMode(true) }) {
+                        Icon(
+                            imageVector = Icons.Default.ClearAll,
+                            contentDescription = stringResource(R.string.home_select_mode)
+                        )
+                    }
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (files.isEmpty()) {
+        if (books.isEmpty()) {
             Text(
                 text = stringResource(R.string.home_directory_empty),
                 style = MaterialTheme.typography.bodyMedium,
@@ -208,10 +268,17 @@ private fun DirectoryTab(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
             ) {
-                items(files, key = { it.absolutePath }) { file ->
-                    DirectoryFileItem(
-                        file = file,
-                        onClick = { onOpenFile(file) }
+                items(books, key = { it.file.absolutePath }) { book ->
+                    DirectoryBookItem(
+                        book = book,
+                        selected = selectedIds.contains(book.file.absolutePath),
+                        onClick = {
+                            if (selectionMode) {
+                                onToggleSelection(book.file.absolutePath)
+                            } else {
+                                onOpenBook(book)
+                            }
+                        }
                     )
                 }
             }
@@ -220,13 +287,24 @@ private fun DirectoryTab(
 }
 
 @Composable
-private fun DirectoryFileItem(
-    file: File,
+private fun DirectoryBookItem(
+    book: DirectoryBook,
+    selected: Boolean,
     onClick: () -> Unit
 ) {
+    val coverFile = remember(book.coverPath) {
+        book.coverPath.takeIf { it.isNotBlank() }?.let { File(it).takeIf { f -> f.exists() } }
+    }
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                CardDefaults.cardColors().containerColor
+            }
+        )
     ) {
         Row(
             modifier = Modifier
@@ -234,21 +312,34 @@ private fun DirectoryFileItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Folder,
-                contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(12.dp))
+            coverFile?.let { file ->
+                AsyncImage(
+                    model = file,
+                    contentDescription = stringResource(R.string.metadata_cover_cd),
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+            } ?: run {
+                Icon(
+                    imageVector = Icons.Default.Folder,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = file.nameWithoutExtension,
+                    text = book.title,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = formatFileDate(file.lastModified()),
+                    text = formatFileDate(book.modified),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -43,16 +43,34 @@ class HomeViewModel @Inject constructor(
 
     fun refreshDirectory() {
         viewModelScope.launch {
-            val files = withContext(Dispatchers.IO) {
+            val books = withContext(Dispatchers.IO) {
                 runCatching {
                     settingsRepository.getSaveDirectory()
                         .listFiles { file -> file.isFile && file.extension.equals("epub", ignoreCase = true) }
                         ?.sortedByDescending { it.lastModified() }
+                        ?.mapNotNull { file -> extractDirectoryBook(file) }
                         ?: emptyList()
                 }.getOrDefault(emptyList())
             }
-            _uiState.update { it.copy(directoryFiles = files) }
+            _uiState.update { it.copy(directoryBooks = books) }
         }
+    }
+
+    private fun extractDirectoryBook(file: File): DirectoryBook? {
+        return runCatching {
+            val book = repository.openFromFile(file)
+            val coverPath = book.opf.metadata.coverManifestId?.let { id ->
+                book.opf.manifest.find { it.id == id }?.let { item ->
+                    book.resolve(item.href).takeIf { it.exists() }?.absolutePath
+                }
+            } ?: ""
+            DirectoryBook(
+                file = file,
+                title = book.opf.metadata.title.ifBlank { file.nameWithoutExtension },
+                coverPath = coverPath,
+                modified = file.lastModified()
+            )
+        }.getOrNull()
     }
 
     fun importFromUri(uri: Uri) {
@@ -172,7 +190,7 @@ class HomeViewModel @Inject constructor(
 
     fun selectAll() {
         _uiState.update { state ->
-            state.copy(selectedIds = state.recentBooks.map { it.id }.toSet())
+            state.copy(selectedIds = state.directoryBooks.map { it.file.absolutePath }.toSet())
         }
     }
 
@@ -180,8 +198,10 @@ class HomeViewModel @Inject constructor(
         val selected = _uiState.value.selectedIds
         if (selected.isEmpty()) return
         viewModelScope.launch {
-            val remaining = _uiState.value.recentBooks.filter { it.id !in selected }
-            settingsRepository.saveRecentBooks(remaining)
+            withContext(Dispatchers.IO) {
+                selected.map { File(it) }.filter { it.exists() }.forEach { it.delete() }
+            }
+            refreshDirectory()
             _uiState.update { it.copy(selectionMode = false, selectedIds = emptySet()) }
         }
     }
@@ -201,7 +221,14 @@ data class HomeUiState(
     val openedBook: EpubBook? = null,
     val error: String? = null,
     val recentBooks: List<RecentBook> = emptyList(),
-    val directoryFiles: List<File> = emptyList(),
+    val directoryBooks: List<DirectoryBook> = emptyList(),
     val selectionMode: Boolean = false,
     val selectedIds: Set<String> = emptySet()
+)
+
+data class DirectoryBook(
+    val file: File,
+    val title: String,
+    val coverPath: String,
+    val modified: Long
 )
