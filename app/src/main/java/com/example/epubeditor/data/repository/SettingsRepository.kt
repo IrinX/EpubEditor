@@ -91,7 +91,7 @@ class SettingsRepository @Inject constructor(
         return File(path).also { it.mkdirs() }
     }
 
-    fun addRecentBook(book: com.example.epubeditor.data.epub.model.EpubBook, sourceUri: Uri? = null, sourceFile: File? = null) {
+    suspend fun addRecentBook(book: com.example.epubeditor.data.epub.model.EpubBook, sourceUri: Uri? = null, sourceFile: File? = null) {
         val originalUriString = sourceUri?.toString() ?: book.originalUri?.toString() ?: ""
         val internalPathString = sourceFile?.absolutePath ?: ""
         val uriString = originalUriString.ifBlank { internalPathString }

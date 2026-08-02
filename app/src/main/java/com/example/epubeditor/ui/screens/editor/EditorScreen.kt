@@ -243,7 +243,7 @@ fun EditorScreen(
             text = {
                 val message = when {
                     uiState.lastExportedUri != null -> "已另存为：\n${uiState.lastExportedUri}"
-                    uiState.lastSavedFile != null -> "已保存到：\n${uiState.lastSavedFile.absolutePath}"
+                    uiState.lastSavedFile != null -> "已保存到：\n${uiState.lastSavedFile?.absolutePath}"
                     else -> stringResource(R.string.editor_saved_message)
                 }
                 Text(message)
