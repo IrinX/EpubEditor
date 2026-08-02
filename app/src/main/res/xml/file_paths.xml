@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="epub_exports" path="epub_exports/" />
+    <cache-path name="epub_cache" path="epub_cache/" />
+    <external-files-path name="external_epub" path="." />
+</paths>

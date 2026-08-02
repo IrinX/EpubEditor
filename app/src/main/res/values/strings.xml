@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EPUB Editor</string>
+
+    <!-- Home -->
+    <string name="home_recent">Recent</string>
+    <string name="home_open">Open</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_recent_title">Recent Projects</string>
+    <string name="home_recent_empty">No recent projects yet. Open an EPUB file to get started.</string>
+    <string name="home_recent_clear">Clear recent</string>
+    <string name="home_recent_clear_title">Clear recent projects</string>
+    <string name="home_recent_clear_message">Remove all recent projects?</string>
+    <string name="home_recent_permission_lost">Permission expired. Please open the EPUB file again from the file picker.</string>
+    <string name="home_open_title">Open EPUB</string>
+    <string name="home_open_button">Select EPUB File</string>
+    <string name="home_settings_title">Settings</string>
+    <string name="home_settings_desc">EPUB Editor v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
+    <string name="home_open_epub_cd">Open EPUB</string>
+    <string name="clear">Clear</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_dark_mode">Dark mode</string>
+    <string name="settings_dark_mode_light">Light</string>
+    <string name="settings_dark_mode_dark">Dark</string>
+    <string name="settings_dark_mode_system">Follow system</string>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_summary">Use wallpaper colors (Android 12+)</string>
+    <string name="settings_general">General</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">Follow system</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_chinese">简体中文</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_title">About EPUB Editor</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_version_summary">Version %1$s</string>
+    <string name="settings_about_desc">A simple EPUB editor built with Jetpack Compose. You can open EPUB files, edit metadata, table of contents, chapters and assets.</string>
+    <string name="settings_repo_label">GitHub repository: IrinX/EpubEditor</string>
+    <string name="settings_licenses">Open source licenses</string>
+    <string name="settings_licenses_summary">Libraries used by this app</string>
+    <string name="settings_open_link">Open link</string>
+
+    <!-- Editor -->
+    <string name="editor_text">Text</string>
+    <string name="editor_toc">TOC</string>
+    <string name="editor_metadata">Metadata</string>
+    <string name="editor_assets">Assets</string>
+    <string name="editor_no_book">No book loaded</string>
+    <string name="editor_back_cd">Back</string>
+    <string name="editor_undo_cd">Undo</string>
+    <string name="editor_redo_cd">Redo</string>
+    <string name="editor_save_cd">Save</string>
+    <string name="editor_saved_title">Saved</string>
+    <string name="editor_saved_message">EPUB saved successfully.</string>
+    <string name="editor_saved_fallback_message">Original file permission expired. EPUB saved to app export directory. Re-open the original file from picker to overwrite it.</string>
+
+    <!-- Common -->
+    <string name="error_title">Error</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="rename">Rename</string>
+    <string name="add">Add</string>
+    <string name="save">Save</string>
+    <string name="confirm">Confirm</string>
+
+    <!-- Metadata -->
+    <string name="metadata_title">Title</string>
+    <string name="metadata_authors">Authors</string>
+    <string name="metadata_publisher">Publisher</string>
+    <string name="metadata_language">Language</string>
+    <string name="metadata_identifier">Identifier</string>
+    <string name="metadata_date">Date</string>
+    <string name="metadata_description">Description</string>
+    <string name="metadata_cover">Cover</string>
+    <string name="metadata_change_cover">Change Cover</string>
+    <string name="metadata_cover_cd">Cover image</string>
+    <string name="metadata_cover_id">Cover ID: %1$s</string>
+
+    <!-- TOC -->
+    <string name="toc_title">Table of Contents</string>
+    <string name="toc_add">Add Chapter</string>
+    <string name="toc_empty">No chapters available.</string>
+    <string name="toc_rename_title">Rename Chapter</string>
+    <string name="toc_new_title_hint">New chapter title</string>
+    <string name="toc_href_hint">Href (e.g. chapter01.xhtml)</string>
+    <string name="toc_delete_confirm">Delete this chapter?</string>
+    <string name="toc_drag_cd">Drag</string>
+    <string name="toc_delete_cd">Delete chapter</string>
+    <string name="toc_untitled">Untitled</string>
+
+    <!-- Assets -->
+    <string name="assets_title">Assets</string>
+    <string name="assets_add">Add Asset</string>
+    <string name="assets_clean">Clean Unused</string>
+    <string name="assets_empty">No assets found.</string>
+    <string name="assets_rename_cd">Rename</string>
+    <string name="assets_delete_cd">Delete</string>
+    <string name="assets_cleaned">Cleaned unused assets</string>
+    <string name="assets_rename_title">Rename Asset</string>
+    <string name="assets_new_name_hint">New file name</string>
+
+    <!-- HTML Editor -->
+    <string name="html_current_chapter">Current chapter</string>
+    <string name="html_select_chapter">Select chapter</string>
+    <string name="html_visual">Visual</string>
+    <string name="html_source">Source</string>
+    <string name="html_bold_cd">Bold</string>
+    <string name="html_italic_cd">Italic</string>
+    <string name="html_list_cd">List</string>
+    <string name="html_heading_cd">Heading</string>
+    <string name="html_align_cd">Align</string>
+    <string name="html_preview_cd">Preview</string>
+    <string name="html_source_cd">Source</string>
+    <string name="html_split_cd">Split chapter</string>
+    <string name="html_merge_cd">Merge chapter</string>
+    <string name="html_toggle_mode_cd">Toggle source/preview</string>
+    <string name="html_select_all_cd">Select all</string>
+    <string name="html_clear_cd">Clear chapter</string>
+    <string name="html_find_replace_cd">Find and replace</string>
+    <string name="html_split_title">Split Chapter</string>
+    <string name="html_split_message">Split current chapter at cursor?</string>
+    <string name="html_merge_title">Merge Chapter</string>
+    <string name="html_merge_message">Merge with previous chapter?</string>
+    <string name="html_clear_title">Clear Chapter</string>
+    <string name="html_clear_message">Delete all content of the current chapter?</string>
+    <string name="html_find_replace_title">Find and Replace</string>
+    <string name="html_find_hint">Find</string>
+    <string name="html_replace_hint">Replace with</string>
+    <string name="html_replace">Replace</string>
+    <string name="html_replace_all">Replace All</string>
+    <string name="html_no_matches">No matches found</string>
+    <string name="html_replaced_count">Replaced %1$d occurrence(s)</string>
+</resources>
