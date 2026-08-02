@@ -105,6 +105,11 @@
     <string name="assets_add">添加资源</string>
     <string name="assets_clean">清理未引用</string>
     <string name="assets_empty">未找到资源文件。</string>
+    <string name="assets_metadata">元数据资源</string>
+    <string name="assets_text">文本资源</string>
+    <string name="assets_images">图片资源</string>
+    <string name="assets_styles">样式资源</string>
+    <string name="assets_other">其他资源</string>
     <string name="assets_rename_cd">重命名</string>
     <string name="assets_delete_cd">删除</string>
     <string name="assets_cleaned">已清理未引用资源</string>

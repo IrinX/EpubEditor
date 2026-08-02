@@ -3,24 +3,31 @@ package com.example.epubeditor.ui.screens.editor.tabs
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,12 +42,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import coil.compose.AsyncImage
 import com.example.epubeditor.R
 import com.example.epubeditor.data.epub.model.ManifestItem
@@ -57,6 +67,7 @@ fun AssetManagerTab(
     var renameItem by remember { mutableStateOf<ManifestItem?>(null) }
     var newName by remember { mutableStateOf("") }
     var previewFile by remember { mutableStateOf<java.io.File?>(null) }
+    var isFabVisible by remember { mutableStateOf(true) }
 
     val addLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -67,49 +78,87 @@ fun AssetManagerTab(
         }
     }
 
-    Column(
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < -30) {
+                    isFabVisible = false
+                } else if (available.y > 30) {
+                    isFabVisible = true
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
+    val groups = remember(book.opf.manifest) { categorizeAssets(book.opf.manifest) }
+    val hasAnyAssets = groups.any { it.items.isNotEmpty() }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.assets_title),
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Button(
-                onClick = { addLauncher.launch("*/*") },
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.assets_add))
-                Text(stringResource(R.string.assets_add))
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(bottom = 88.dp)
+        ) {
+            item {
+                Text(
+                    text = stringResource(R.string.assets_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = { viewModel.cleanUnusedAssets() },
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(Icons.Default.CleaningServices, contentDescription = stringResource(R.string.assets_clean))
-                Text(stringResource(R.string.assets_clean))
+
+            if (!hasAnyAssets) {
+                item {
+                    Text(
+                        text = stringResource(R.string.assets_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                groups.forEach { group ->
+                    if (group.items.isNotEmpty()) {
+                        item(key = "header_${group.titleRes}") {
+                            SectionHeader(
+                                title = stringResource(group.titleRes),
+                                count = group.items.size
+                            )
+                        }
+                        items(group.items, key = { it.id }) { item ->
+                            val file = remember(item.href) { book.resolve(item.href).takeIf { it.exists() } }
+                            AssetItem(
+                                item = item,
+                                file = file,
+                                onPreview = { file?.let { previewFile = it } },
+                                onRename = {
+                                    renameItem = item
+                                    newName = item.href.substringAfterLast("/")
+                                },
+                                onDelete = { viewModel.deleteAsset(item) }
+                            )
+                        }
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(book.opf.manifest, key = { it.id }) { item ->
-                val file = remember(item.href) { book.resolve(item.href).takeIf { it.exists() } }
-                AssetItem(
-                    item = item,
-                    file = file,
-                    onPreview = { file?.let { previewFile = it } },
-                    onRename = {
-                        renameItem = item
-                        newName = item.href.substringAfterLast("/")
-                    },
-                    onDelete = { viewModel.deleteAsset(item) }
+        AnimatedVisibility(
+            visible = isFabVisible,
+            enter = slideInVertically(initialOffsetY = { it * 2 }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomEnd)
+        ) {
+            FloatingActionButton(onClick = { addLauncher.launch("*/*") }) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.assets_add)
                 )
             }
         }
@@ -149,6 +198,22 @@ fun AssetManagerTab(
 }
 
 @Composable
+private fun SectionHeader(
+    title: String,
+    count: Int
+) {
+    Column {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "$title ($count)",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+    }
+}
+
+@Composable
 private fun AssetItem(
     item: ManifestItem,
     file: java.io.File?,
@@ -160,7 +225,6 @@ private fun AssetItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
     ) {
         Row(
             modifier = Modifier
@@ -196,6 +260,52 @@ private fun AssetItem(
                 Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.assets_delete_cd))
             }
         }
+    }
+}
+
+private data class AssetGroup(
+    val titleRes: Int,
+    val items: List<ManifestItem>
+)
+
+private enum class AssetCategory {
+    METADATA, TEXT, IMAGES, STYLES, OTHER
+}
+
+private fun categorizeAssets(manifest: List<ManifestItem>): List<AssetGroup> {
+    val metadata = mutableListOf<ManifestItem>()
+    val text = mutableListOf<ManifestItem>()
+    val images = mutableListOf<ManifestItem>()
+    val styles = mutableListOf<ManifestItem>()
+    val other = mutableListOf<ManifestItem>()
+
+    manifest.forEach { item ->
+        when (classifyAsset(item.href)) {
+            AssetCategory.METADATA -> metadata.add(item)
+            AssetCategory.TEXT -> text.add(item)
+            AssetCategory.IMAGES -> images.add(item)
+            AssetCategory.STYLES -> styles.add(item)
+            AssetCategory.OTHER -> other.add(item)
+        }
+    }
+
+    return listOf(
+        AssetGroup(R.string.assets_metadata, metadata),
+        AssetGroup(R.string.assets_text, text),
+        AssetGroup(R.string.assets_images, images),
+        AssetGroup(R.string.assets_styles, styles),
+        AssetGroup(R.string.assets_other, other)
+    )
+}
+
+private fun classifyAsset(href: String): AssetCategory {
+    val segments = href.split("/").dropLast(1).map { it.lowercase() }
+    return when {
+        segments.isEmpty() -> AssetCategory.METADATA
+        "txt" in segments -> AssetCategory.TEXT
+        "images" in segments -> AssetCategory.IMAGES
+        "styles" in segments -> AssetCategory.STYLES
+        else -> AssetCategory.OTHER
     }
 }
 

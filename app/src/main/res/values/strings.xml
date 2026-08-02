@@ -105,6 +105,11 @@
     <string name="assets_add">Add Asset</string>
     <string name="assets_clean">Clean Unused</string>
     <string name="assets_empty">No assets found.</string>
+    <string name="assets_metadata">Metadata Resources</string>
+    <string name="assets_text">Text Resources</string>
+    <string name="assets_images">Image Resources</string>
+    <string name="assets_styles">Style Resources</string>
+    <string name="assets_other">Other Resources</string>
     <string name="assets_rename_cd">Rename</string>
     <string name="assets_delete_cd">Delete</string>
     <string name="assets_cleaned">Cleaned unused assets</string>
