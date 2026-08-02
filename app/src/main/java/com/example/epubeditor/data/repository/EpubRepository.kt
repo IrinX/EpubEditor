@@ -5,6 +5,7 @@ import android.net.Uri
 import com.example.epubeditor.data.epub.EpubParser
 import com.example.epubeditor.data.epub.EpubWriter
 import com.example.epubeditor.data.epub.model.EpubBook
+import com.example.epubeditor.util.sanitizeFileName
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,16 +24,14 @@ data class SaveResult(
 class EpubRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val parser: EpubParser,
-    private val writer: EpubWriter
+    private val writer: EpubWriter,
+    private val settingsRepository: SettingsRepository
 ) {
     private val workingRootDir: File
         get() = File(context.cacheDir, "epub_working").apply { mkdirs() }
 
     private val importDir: File
         get() = File(context.filesDir, "epub_imports").apply { mkdirs() }
-
-    private val exportDir: File
-        get() = File(context.filesDir, "epub_exports").apply { mkdirs() }
 
     private val openedBooks = mutableMapOf<String, EpubBook>()
 
@@ -62,25 +61,14 @@ class EpubRepository @Inject constructor(
             return@withContext SaveResult(writer.write(book, file))
         }
 
-        // 优先写回原始 URI（用户从文件选择器打开的位置）
-        book.originalUri?.let { uri ->
-            try {
-                context.contentResolver.openOutputStream(uri)?.use { output ->
-                    writer.write(book, output)
-                }
-                // 同时更新内部副本，保持一致
-                book.sourceFile?.let { writer.write(book, it) }
-                return@withContext SaveResult(
-                    book.sourceFile ?: File(exportDir, "${book.opf.metadata.title.replace("\\s+".toRegex(), "_")}.epub"),
-                    fallback = false
-                )
-            } catch (_: SecurityException) {
-                // 原位置权限失效，降级到 sourceFile 或导出目录
-            }
-        }
-
-        val target = book.sourceFile ?: File(exportDir, "${book.opf.metadata.title.replace("\\s+".toRegex(), "_")}.epub")
-        SaveResult(writer.write(book, target), fallback = book.originalUri != null)
+        val saveDir = settingsRepository.getSaveDirectory()
+        val fileName = book.opf.metadata.title
+            .takeIf { it.isNotBlank() }
+            ?.sanitizeFileName()
+            ?.plus(".epub")
+            ?: "book.epub"
+        val target = File(saveDir, fileName)
+        SaveResult(writer.write(book, target), fallback = false)
     }
 
     private fun stableId(source: String): String {

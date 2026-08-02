@@ -33,6 +33,12 @@
     <string name="settings_dynamic_color">动态取色</string>
     <string name="settings_dynamic_color_summary">使用壁纸颜色（Android 12 及以上）</string>
     <string name="settings_general">通用</string>
+
+    <string name="settings_save_path">默认保存路径</string>
+    <string name="settings_save_path_dialog_title">默认保存路径</string>
+    <string name="settings_save_path_dialog_hint">目录绝对路径</string>
+    <string name="settings_save_path_dialog_reset">恢复默认</string>
+
     <string name="settings_language">语言</string>
     <string name="settings_language_system">跟随系统</string>
     <string name="settings_language_english">English</string>

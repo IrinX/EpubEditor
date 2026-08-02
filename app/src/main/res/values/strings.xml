@@ -33,6 +33,12 @@
     <string name="settings_dynamic_color">Dynamic color</string>
     <string name="settings_dynamic_color_summary">Use wallpaper colors (Android 12+)</string>
     <string name="settings_general">General</string>
+
+    <string name="settings_save_path">Default save path</string>
+    <string name="settings_save_path_dialog_title">Default save path</string>
+    <string name="settings_save_path_dialog_hint">Absolute directory path</string>
+    <string name="settings_save_path_dialog_reset">Reset to default</string>
+
     <string name="settings_language">Language</string>
     <string name="settings_language_system">Follow system</string>
     <string name="settings_language_english">English</string>

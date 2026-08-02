@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -54,6 +55,7 @@ class SettingsRepository @Inject constructor(
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val LANGUAGE = stringPreferencesKey("language")
         val RECENT_BOOKS = stringPreferencesKey("recent_books")
+        val SAVE_PATH = stringPreferencesKey("save_path")
     }
 
     val preferences: Flow<AppPreferences> = dataStore.data.map { prefs ->
@@ -61,7 +63,8 @@ class SettingsRepository @Inject constructor(
             darkMode = runCatching { DarkMode.valueOf(prefs[Keys.DARK_MODE] ?: "SYSTEM") }.getOrDefault(DarkMode.SYSTEM),
             dynamicColor = prefs[Keys.DYNAMIC_COLOR] ?: true,
             language = runCatching { AppLanguage.valueOf(prefs[Keys.LANGUAGE] ?: "SYSTEM") }.getOrDefault(AppLanguage.SYSTEM),
-            recentBooks = parseRecentBooks(prefs[Keys.RECENT_BOOKS])
+            recentBooks = parseRecentBooks(prefs[Keys.RECENT_BOOKS]),
+            savePath = prefs[Keys.SAVE_PATH] ?: DEFAULT_SAVE_PATH
         )
     }
 
@@ -78,7 +81,17 @@ class SettingsRepository @Inject constructor(
         applyLanguage(language)
     }
 
-    suspend fun addRecentBook(book: com.example.epubeditor.data.epub.model.EpubBook, sourceUri: Uri? = null, sourceFile: File? = null) {
+    suspend fun setSavePath(path: String) {
+        dataStore.edit { it[Keys.SAVE_PATH] = path }
+    }
+
+    suspend fun getSaveDirectory(): File {
+        val configured = dataStore.data.map { it[Keys.SAVE_PATH] }.firstOrNull()
+        val path = configured.takeIf { !it.isNullOrBlank() } ?: DEFAULT_SAVE_PATH
+        return File(path).also { it.mkdirs() }
+    }
+
+    fun addRecentBook(book: com.example.epubeditor.data.epub.model.EpubBook, sourceUri: Uri? = null, sourceFile: File? = null) {
         val originalUriString = sourceUri?.toString() ?: book.originalUri?.toString() ?: ""
         val internalPathString = sourceFile?.absolutePath ?: ""
         val uriString = originalUriString.ifBlank { internalPathString }
@@ -128,6 +141,7 @@ class SettingsRepository @Inject constructor(
 
     companion object {
         private const val MAX_RECENT = 20
+        const val DEFAULT_SAVE_PATH = "/storage/emulated/0/Epub Editor"
     }
 }
 
@@ -135,5 +149,6 @@ data class AppPreferences(
     val darkMode: DarkMode = DarkMode.SYSTEM,
     val dynamicColor: Boolean = true,
     val language: AppLanguage = AppLanguage.SYSTEM,
-    val recentBooks: List<RecentBook> = emptyList()
+    val recentBooks: List<RecentBook> = emptyList(),
+    val savePath: String = DEFAULT_SAVE_PATH
 )

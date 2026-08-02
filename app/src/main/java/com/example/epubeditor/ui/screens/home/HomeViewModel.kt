@@ -1,7 +1,6 @@
 package com.example.epubeditor.ui.screens.home
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,12 +42,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                takePersistableUriPermission(uri)
                 val book = repository.openFromUri(uri)
                 settingsRepository.addRecentBook(book, sourceUri = uri, sourceFile = book.sourceFile)
                 _uiState.update { it.copy(isLoading = false, openedBook = book) }
-            } catch (e: SecurityException) {
-                _uiState.update { it.copy(isLoading = false, error = context.getString(R.string.home_recent_permission_lost)) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
@@ -143,14 +139,6 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(error = null) }
     }
 
-    private fun takePersistableUriPermission(uri: Uri) {
-        try {
-            val mode = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(uri, mode)
-        } catch (_: SecurityException) {
-            // Provider may not support persistable permission; ignore and let openFromUri fail naturally if needed.
-        }
-    }
 }
 
 data class HomeUiState(

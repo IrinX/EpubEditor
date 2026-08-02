@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
@@ -25,6 +26,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -45,6 +47,7 @@ import com.example.epubeditor.BuildConfig
 import com.example.epubeditor.R
 import com.example.epubeditor.data.repository.AppLanguage
 import com.example.epubeditor.data.repository.DarkMode
+import com.example.epubeditor.data.repository.SettingsRepository
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
@@ -54,6 +57,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showDarkDialog by remember { mutableStateOf(false) }
+    var showSavePathDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showLicenseDialog by remember { mutableStateOf(false) }
 
@@ -92,6 +96,13 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_language),
             summary = languageLabel(prefs.language),
             onClick = { showLanguageDialog = true }
+        )
+
+        SettingsListItem(
+            icon = Icons.Default.Folder,
+            title = stringResource(R.string.settings_save_path),
+            summary = prefs.savePath,
+            onClick = { showSavePathDialog = true }
         )
 
         SettingsSectionTitle(stringResource(R.string.settings_about))
@@ -134,6 +145,40 @@ fun SettingsScreen(
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false }
+        )
+    }
+
+    if (showSavePathDialog) {
+        var pathInput by remember { mutableStateOf(prefs.savePath) }
+        AlertDialog(
+            onDismissRequest = { showSavePathDialog = false },
+            title = { Text(stringResource(R.string.settings_save_path_dialog_title)) },
+            text = {
+                OutlinedTextField(
+                    value = pathInput,
+                    onValueChange = { pathInput = it },
+                    label = { Text(stringResource(R.string.settings_save_path_dialog_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setSavePath(pathInput)
+                    showSavePathDialog = false
+                }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pathInput = SettingsRepository.DEFAULT_SAVE_PATH
+                    viewModel.setSavePath(pathInput)
+                    showSavePathDialog = false
+                }) {
+                    Text(stringResource(R.string.settings_save_path_dialog_reset))
+                }
+            }
         )
     }
 

@@ -42,4 +42,8 @@ class SettingsViewModel @Inject constructor(
     fun setLanguage(language: AppLanguage) {
         viewModelScope.launch { repository.setLanguage(language) }
     }
+
+    fun setSavePath(path: String) {
+        viewModelScope.launch { repository.setSavePath(path) }
+    }
 }
