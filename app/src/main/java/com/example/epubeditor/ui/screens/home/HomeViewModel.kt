@@ -56,7 +56,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun extractDirectoryBook(file: File): DirectoryBook? {
+    private suspend fun extractDirectoryBook(file: File): DirectoryBook? {
         return runCatching {
             val book = repository.openFromFile(file)
             val coverPath = book.opf.metadata.coverManifestId?.let { id ->
