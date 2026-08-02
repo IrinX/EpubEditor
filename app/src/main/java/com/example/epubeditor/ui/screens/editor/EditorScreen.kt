@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.List
@@ -13,7 +14,11 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Save
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.res.stringResource
@@ -41,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.epubeditor.R
 import com.example.epubeditor.ui.components.LoadingOverlay
+import com.example.epubeditor.util.sanitizeFileName
 import com.example.epubeditor.ui.screens.editor.tabs.AssetManagerTab
 import com.example.epubeditor.ui.screens.editor.tabs.HtmlEditorTab
 import com.example.epubeditor.ui.screens.editor.tabs.MetadataEditorTab
@@ -83,9 +90,17 @@ fun EditorScreen(
     val uiState by viewModel.uiState.collectAsState()
     val book = viewModel.book
     var showSaveSuccess by remember { mutableStateOf(false) }
+    var saveMenuExpanded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState.lastSavedFile) {
-        if (uiState.lastSavedFile != null) {
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/epub+zip")
+    ) { uri ->
+        uri?.let { viewModel.exportToUri(it) }
+    }
+
+    val showSuccess = uiState.lastSavedFile != null || uiState.lastExportedUri != null
+    LaunchedEffect(showSuccess) {
+        if (showSuccess) {
             showSaveSuccess = true
         }
     }
@@ -111,8 +126,34 @@ fun EditorScreen(
                     IconButton(onClick = viewModel::redo, enabled = uiState.canRedo) {
                         Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = stringResource(R.string.editor_redo_cd))
                     }
-                    IconButton(onClick = viewModel::saveBook) {
-                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.editor_save_cd))
+                    Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+                        IconButton(onClick = { saveMenuExpanded = true }) {
+                            Icon(Icons.Default.Save, contentDescription = stringResource(R.string.editor_save_cd))
+                        }
+                        DropdownMenu(
+                            expanded = saveMenuExpanded,
+                            onDismissRequest = { saveMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.save)) },
+                                onClick = {
+                                    saveMenuExpanded = false
+                                    viewModel.saveBook()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.editor_export)) },
+                                onClick = {
+                                    saveMenuExpanded = false
+                                    val defaultName = book?.opf?.metadata?.title
+                                        ?.takeIf { it.isNotBlank() }
+                                        ?.sanitizeFileName()
+                                        ?.plus(".epub")
+                                        ?: "book.epub"
+                                    exportLauncher.launch(defaultName)
+                                }
+                            )
+                        }
                     }
                 }
             )
@@ -200,12 +241,12 @@ fun EditorScreen(
             onDismissRequest = { showSaveSuccess = false },
             title = { Text(stringResource(R.string.editor_saved_title)) },
             text = {
-                Text(
-                    stringResource(
-                        if (uiState.saveFallback) R.string.editor_saved_fallback_message
-                        else R.string.editor_saved_message
-                    )
-                )
+                val message = when {
+                    uiState.lastExportedUri != null -> "已另存为：\n${uiState.lastExportedUri}"
+                    uiState.saveFallback -> stringResource(R.string.editor_saved_fallback_message)
+                    else -> stringResource(R.string.editor_saved_message)
+                }
+                Text(message)
             },
             confirmButton = {
                 TextButton(onClick = { showSaveSuccess = false }) {

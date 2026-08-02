@@ -57,6 +57,8 @@
     <string name="editor_undo_cd">撤销</string>
     <string name="editor_redo_cd">重做</string>
     <string name="editor_save_cd">保存</string>
+    <string name="editor_export">另存为</string>
+    <string name="editor_export_cd">另存为 EPUB</string>
     <string name="editor_saved_title">已保存</string>
     <string name="editor_saved_message">EPUB 保存成功。</string>
     <string name="editor_saved_fallback_message">原文件权限已过期，已保存到应用导出目录。如需覆盖原文件，请重新从文件选择器打开。</string>

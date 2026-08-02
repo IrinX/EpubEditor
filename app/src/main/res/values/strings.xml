@@ -57,6 +57,8 @@
     <string name="editor_undo_cd">Undo</string>
     <string name="editor_redo_cd">Redo</string>
     <string name="editor_save_cd">Save</string>
+    <string name="editor_export">Save As</string>
+    <string name="editor_export_cd">Save As EPUB</string>
     <string name="editor_saved_title">Saved</string>
     <string name="editor_saved_message">EPUB saved successfully.</string>
     <string name="editor_saved_fallback_message">Original file permission expired. EPUB saved to app export directory. Re-open the original file from picker to overwrite it.</string>

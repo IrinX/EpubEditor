@@ -1,12 +1,14 @@
 package com.example.epubeditor.ui.screens.editor
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.epubeditor.data.epub.CommandManager
 import com.example.epubeditor.data.epub.EditCommand
+import com.example.epubeditor.data.epub.EpubWriter
 import com.example.epubeditor.data.epub.model.EpubBook
 import com.example.epubeditor.data.epub.model.EpubMetadata
 import com.example.epubeditor.data.epub.model.ManifestItem
@@ -35,6 +37,7 @@ import javax.inject.Inject
 class EditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: EpubRepository,
+    private val writer: EpubWriter,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -555,7 +558,7 @@ $bodyContent
         val current = _book ?: return
         commitPendingHtml()
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null, saveFallback = false) }
+            _uiState.update { it.copy(isLoading = true, error = null, saveFallback = false, lastExportedUri = null) }
             try {
                 val result = repository.save(current)
                 _uiState.update { it.copy(isLoading = false, lastSavedFile = result.file, saveFallback = result.fallback) }
@@ -565,8 +568,36 @@ $bodyContent
         }
     }
 
+    fun exportToUri(uri: Uri) {
+        val current = _book ?: return
+        commitPendingHtml()
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null, lastExportedUri = null) }
+            try {
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.use { output ->
+                        writer.write(current, output)
+                    } ?: throw IllegalStateException("Cannot open output stream")
+                    takePersistableUriPermission(uri)
+                }
+                _uiState.update { it.copy(isLoading = false, lastExportedUri = uri) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
+    }
+
     fun dismissError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    private fun takePersistableUriPermission(uri: Uri) {
+        try {
+            val mode = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(uri, mode)
+        } catch (_: SecurityException) {
+            // Provider may not support persistable permission; ignore.
+        }
     }
 
     private fun guessMediaType(name: String): String {
@@ -599,6 +630,7 @@ data class EditorUiState(
     val bookVersion: Int = 0,
     val lastSavedFile: File? = null,
     val saveFallback: Boolean = false,
+    val lastExportedUri: Uri? = null,
     val error: String? = null,
     val sourceMode: Boolean = false
 )
