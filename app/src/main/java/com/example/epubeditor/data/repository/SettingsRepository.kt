@@ -150,5 +150,5 @@ data class AppPreferences(
     val dynamicColor: Boolean = true,
     val language: AppLanguage = AppLanguage.SYSTEM,
     val recentBooks: List<RecentBook> = emptyList(),
-    val savePath: String = DEFAULT_SAVE_PATH
+    val savePath: String = SettingsRepository.DEFAULT_SAVE_PATH
 )
