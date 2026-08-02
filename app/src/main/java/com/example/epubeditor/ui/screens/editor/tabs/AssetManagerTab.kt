@@ -32,12 +32,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import coil.compose.AsyncImage
 import com.example.epubeditor.R
 import com.example.epubeditor.data.epub.model.ManifestItem
+import com.example.epubeditor.ui.components.ImagePreviewDialog
 import com.example.epubeditor.ui.screens.editor.EditorViewModel
 
 @Composable
@@ -49,6 +56,7 @@ fun AssetManagerTab(
     val context = LocalContext.current
     var renameItem by remember { mutableStateOf<ManifestItem?>(null) }
     var newName by remember { mutableStateOf("") }
+    var previewFile by remember { mutableStateOf<java.io.File?>(null) }
 
     val addLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -92,8 +100,11 @@ fun AssetManagerTab(
 
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(book.opf.manifest, key = { it.id }) { item ->
+                val file = remember(item.href) { book.resolve(item.href).takeIf { it.exists() } }
                 AssetItem(
                     item = item,
+                    file = file,
+                    onPreview = { file?.let { previewFile = it } },
                     onRename = {
                         renameItem = item
                         newName = item.href.substringAfterLast("/")
@@ -130,14 +141,22 @@ fun AssetManagerTab(
             }
         )
     }
+
+    ImagePreviewDialog(
+        imageFile = previewFile,
+        onDismiss = { previewFile = null }
+    )
 }
 
 @Composable
 private fun AssetItem(
     item: ManifestItem,
+    file: java.io.File?,
+    onPreview: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val isImage = item.mediaType.startsWith("image/")
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -146,8 +165,22 @@ private fun AssetItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isImage && file != null) {
+                AsyncImage(
+                    model = file,
+                    contentDescription = stringResource(R.string.image_preview_cd),
+                    modifier = Modifier
+                        .width(56.dp)
+                        .height(56.dp)
+                        .padding(end = 12.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onPreview() },
+                    contentScale = ContentScale.Crop
+                )
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = item.href, style = MaterialTheme.typography.bodyMedium)
                 Text(

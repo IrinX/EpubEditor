@@ -10,16 +10,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -35,13 +41,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.epubeditor.R
 import com.example.epubeditor.data.epub.model.EpubBook
@@ -119,8 +127,13 @@ fun HomeScreen(
             when (selectedTab) {
                 0 -> RecentTab(
                     recentBooks = uiState.recentBooks,
+                    selectionMode = uiState.selectionMode,
+                    selectedIds = uiState.selectedIds,
                     onOpenRecent = viewModel::openRecent,
-                    onClearRecent = viewModel::clearRecentBooks
+                    onSetSelectionMode = viewModel::setSelectionMode,
+                    onToggleSelection = viewModel::toggleSelection,
+                    onSelectAll = viewModel::selectAll,
+                    onDeleteSelected = viewModel::deleteSelectedBooks
                 )
                 1 -> OpenTab(onOpenClick = { openLauncher.launch("application/epub+zip") })
                 2 -> SettingsScreen(viewModel = settingsViewModel)
@@ -147,11 +160,14 @@ fun HomeScreen(
 @Composable
 private fun RecentTab(
     recentBooks: List<RecentBook>,
+    selectionMode: Boolean,
+    selectedIds: Set<String>,
     onOpenRecent: (RecentBook) -> Unit,
-    onClearRecent: () -> Unit
+    onSetSelectionMode: (Boolean) -> Unit,
+    onToggleSelection: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onDeleteSelected: () -> Unit
 ) {
-    var showClearConfirm by remember { mutableStateOf(false) }
-
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -163,11 +179,35 @@ private fun RecentTab(
                 modifier = Modifier.weight(1f)
             )
             if (recentBooks.isNotEmpty()) {
-                IconButton(onClick = { showClearConfirm = true }) {
-                    Icon(
-                        imageVector = Icons.Default.ClearAll,
-                        contentDescription = stringResource(R.string.home_recent_clear)
-                    )
+                if (selectionMode) {
+                    IconButton(onClick = onSelectAll) {
+                        Icon(
+                            imageVector = Icons.Default.SelectAll,
+                            contentDescription = stringResource(R.string.home_select_all)
+                        )
+                    }
+                    IconButton(
+                        onClick = onDeleteSelected,
+                        enabled = selectedIds.isNotEmpty()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.delete)
+                        )
+                    }
+                    IconButton(onClick = { onSetSelectionMode(false) }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.cancel)
+                        )
+                    }
+                } else {
+                    IconButton(onClick = { onSetSelectionMode(true) }) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = stringResource(R.string.home_select_mode)
+                        )
+                    }
                 }
             }
         }
@@ -187,59 +227,76 @@ private fun RecentTab(
                 items(recentBooks, key = { it.id }) { book ->
                     RecentBookItem(
                         book = book,
-                        onClick = { onOpenRecent(book) }
+                        selectionMode = selectionMode,
+                        selected = selectedIds.contains(book.id),
+                        onClick = {
+                            if (selectionMode) {
+                                onToggleSelection(book.id)
+                            } else {
+                                onOpenRecent(book)
+                            }
+                        },
+                        onToggleSelection = { onToggleSelection(book.id) }
                     )
                 }
             }
         }
-    }
-
-    if (showClearConfirm) {
-        AlertDialog(
-            onDismissRequest = { showClearConfirm = false },
-            title = { Text(stringResource(R.string.home_recent_clear_title)) },
-            text = { Text(stringResource(R.string.home_recent_clear_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    onClearRecent()
-                    showClearConfirm = false
-                }) {
-                    Text(stringResource(R.string.clear))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearConfirm = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
     }
 }
 
 @Composable
 private fun RecentBookItem(
     book: RecentBook,
-    onClick: () -> Unit
+    selectionMode: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onToggleSelection: () -> Unit
 ) {
+    val coverFile = remember(book.coverPath) {
+        book.coverPath.takeIf { it.isNotBlank() }?.let { java.io.File(it).takeIf { f -> f.exists() } }
+    }
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = book.title,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formatRecentDate(book.openedAt),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (selectionMode) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = { onToggleSelection() }
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+
+            coverFile?.let { file ->
+                AsyncImage(
+                    model = file,
+                    contentDescription = stringResource(R.string.metadata_cover_cd),
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = book.title,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = formatRecentDate(book.openedAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

@@ -39,6 +39,7 @@ data class RecentBook(
     val uri: String,
     val internalPath: String = "",
     val originalUri: String = "",
+    val coverPath: String = "",
     val openedAt: Long
 )
 
@@ -81,12 +82,18 @@ class SettingsRepository @Inject constructor(
         val originalUriString = sourceUri?.toString() ?: book.originalUri?.toString() ?: ""
         val internalPathString = sourceFile?.absolutePath ?: ""
         val uriString = originalUriString.ifBlank { internalPathString }
+        val coverPath = book.opf.metadata.coverManifestId?.let { id ->
+            book.opf.manifest.find { it.id == id }?.let { item ->
+                book.resolve(item.href).takeIf { it.exists() }?.absolutePath
+            }
+        } ?: ""
         val newEntry = RecentBook(
             id = book.id,
             title = book.opf.metadata.title.ifBlank { book.id },
             uri = uriString,
             internalPath = internalPathString,
             originalUri = originalUriString,
+            coverPath = coverPath,
             openedAt = System.currentTimeMillis()
         )
         dataStore.edit { prefs ->
@@ -99,6 +106,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun clearRecentBooks() {
         dataStore.edit { it[Keys.RECENT_BOOKS] = "[]" }
+    }
+
+    suspend fun saveRecentBooks(books: List<RecentBook>) {
+        dataStore.edit { it[Keys.RECENT_BOOKS] = Json.encodeToString(books.take(MAX_RECENT)) }
     }
 
     fun applyLanguage(language: AppLanguage) {

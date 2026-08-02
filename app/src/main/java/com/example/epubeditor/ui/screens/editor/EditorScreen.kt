@@ -58,11 +58,11 @@ private fun AutoSizeText(
     var shouldDraw by remember(text) { mutableStateOf(false) }
 
     Text(
-        text = text,
-        modifier = modifier.drawWithContent { if (shouldDraw) drawContent() },
-        style = currentStyle,
-        maxLines = maxLines,
-        overflow = TextOverflow.Ellipsis,
+            text = text,
+            modifier = modifier.drawWithContent { if (shouldDraw) drawContent() },
+            style = currentStyle.copy(lineHeight = (currentStyle.fontSize.value * 1.1f).sp),
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
         onTextLayout = { result ->
             if (result.hasVisualOverflow && currentStyle.fontSize > minFontSize) {
                 currentStyle = currentStyle.copy(fontSize = (currentStyle.fontSize.value * 0.9f).sp)

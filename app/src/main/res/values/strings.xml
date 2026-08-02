@@ -11,6 +11,8 @@
     <string name="home_recent_clear">Clear recent</string>
     <string name="home_recent_clear_title">Clear recent projects</string>
     <string name="home_recent_clear_message">Remove all recent projects?</string>
+    <string name="home_select_mode">Select</string>
+    <string name="home_select_all">Select All</string>
     <string name="home_recent_permission_lost">Permission expired. Please open the EPUB file again from the file picker.</string>
     <string name="home_open_title">Open EPUB</string>
     <string name="home_open_button">Select EPUB File</string>
@@ -60,6 +62,7 @@
     <string name="error_title">Error</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
     <string name="delete">Delete</string>
     <string name="rename">Rename</string>
     <string name="add">Add</string>
@@ -78,6 +81,7 @@
     <string name="metadata_change_cover">Change Cover</string>
     <string name="metadata_cover_cd">Cover image</string>
     <string name="metadata_cover_id">Cover ID: %1$s</string>
+    <string name="image_preview_cd">Image preview</string>
 
     <!-- TOC -->
     <string name="toc_title">Table of Contents</string>

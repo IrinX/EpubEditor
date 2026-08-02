@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
@@ -19,10 +20,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.epubeditor.R
+import com.example.epubeditor.ui.components.ImagePreviewDialog
 import com.example.epubeditor.ui.screens.editor.EditorViewModel
 
 @Composable
@@ -33,6 +43,15 @@ fun MetadataEditorTab(
     val book = viewModel.book ?: return
     val metadata = book.opf.metadata
     val scrollState = rememberScrollState()
+    var previewCover by remember { mutableStateOf<java.io.File?>(null) }
+
+    val coverFile = remember(metadata.coverManifestId, book.opf.manifest) {
+        metadata.coverManifestId?.let { id ->
+            book.opf.manifest.find { it.id == id }?.let { item ->
+                book.resolve(item.href).takeIf { it.exists() }
+            }
+        }
+    }
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -92,6 +111,20 @@ fun MetadataEditorTab(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
+        coverFile?.let { file ->
+            AsyncImage(
+                model = file,
+                contentDescription = stringResource(R.string.metadata_cover_cd),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { previewCover = file },
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         Button(
             onClick = { imageLauncher.launch("image/*") },
             modifier = Modifier.fillMaxWidth()
@@ -108,6 +141,11 @@ fun MetadataEditorTab(
             )
         }
     }
+
+    ImagePreviewDialog(
+        imageFile = previewCover,
+        onDismiss = { previewCover = null }
+    )
 }
 
 @Composable

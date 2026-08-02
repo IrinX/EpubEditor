@@ -108,6 +108,33 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.clearRecentBooks() }
     }
 
+    fun setSelectionMode(enabled: Boolean) {
+        _uiState.update { it.copy(selectionMode = enabled, selectedIds = if (enabled) emptySet() else it.selectedIds) }
+    }
+
+    fun toggleSelection(id: String) {
+        _uiState.update { state ->
+            val current = state.selectedIds
+            state.copy(selectedIds = if (current.contains(id)) current - id else current + id)
+        }
+    }
+
+    fun selectAll() {
+        _uiState.update { state ->
+            state.copy(selectedIds = state.recentBooks.map { it.id }.toSet())
+        }
+    }
+
+    fun deleteSelectedBooks() {
+        val selected = _uiState.value.selectedIds
+        if (selected.isEmpty()) return
+        viewModelScope.launch {
+            val remaining = _uiState.value.recentBooks.filter { it.id !in selected }
+            settingsRepository.saveRecentBooks(remaining)
+            _uiState.update { it.copy(selectionMode = false, selectedIds = emptySet()) }
+        }
+    }
+
     fun clearOpenedBook() {
         _uiState.update { it.copy(openedBook = null) }
     }
@@ -130,5 +157,7 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val openedBook: EpubBook? = null,
     val error: String? = null,
-    val recentBooks: List<RecentBook> = emptyList()
+    val recentBooks: List<RecentBook> = emptyList(),
+    val selectionMode: Boolean = false,
+    val selectedIds: Set<String> = emptySet()
 )
