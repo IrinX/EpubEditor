@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -143,39 +144,44 @@ fun HomeScreen(
                 )
             }
         },
-        floatingActionButton = {
-            if (selectedTab == 0) {
-                AnimatedVisibility(
-                    visible = isHomeFabVisible,
-                    enter = slideInVertically(initialOffsetY = { it * 2 }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut()
-                ) {
-                    FloatingActionButton(onClick = { importLauncher.launch("application/epub+zip") }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_import_file))
-                    }
-                }
-            }
-        }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            when (selectedTab) {
-                0 -> DirectoryTab(
-                    books = uiState.directoryBooks,
-                    selectionMode = uiState.selectionMode,
-                    selectedIds = uiState.selectedIds,
-                    onOpenBook = { book -> viewModel.openFromFile(book.file) },
-                    onSetSelectionMode = viewModel::setSelectionMode,
-                    onToggleSelection = viewModel::toggleSelection,
-                    onSelectAll = viewModel::selectAll,
-                    onDeleteSelected = viewModel::deleteSelectedBooks,
-                    onFabVisibilityChanged = { isHomeFabVisible = it }
-                )
-                1 -> SettingsScreen(viewModel = settingsViewModel)
+            Column(modifier = Modifier.fillMaxSize()) {
+                when (selectedTab) {
+                    0 -> DirectoryTab(
+                        books = uiState.directoryBooks,
+                        selectionMode = uiState.selectionMode,
+                        selectedIds = uiState.selectedIds,
+                        onOpenBook = { book -> viewModel.openFromFile(book.file) },
+                        onSetSelectionMode = viewModel::setSelectionMode,
+                        onToggleSelection = viewModel::toggleSelection,
+                        onSelectAll = viewModel::selectAll,
+                        onDeleteSelected = viewModel::deleteSelectedBooks,
+                        onFabVisibilityChanged = { isHomeFabVisible = it }
+                    )
+                    1 -> SettingsScreen(viewModel = settingsViewModel)
+                }
+            }
+
+            if (selectedTab == 0) {
+                AnimatedVisibility(
+                    visible = isHomeFabVisible,
+                    enter = slideInVertically(initialOffsetY = { it * 2 }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut(),
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    FloatingActionButton(
+                        onClick = { importLauncher.launch("application/epub+zip") },
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_import_file))
+                    }
+                }
             }
         }
     }
