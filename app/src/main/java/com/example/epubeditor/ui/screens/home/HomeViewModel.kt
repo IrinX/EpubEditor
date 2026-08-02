@@ -15,8 +15,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
@@ -34,8 +36,61 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.preferences.collect { prefs ->
                 _uiState.update { it.copy(recentBooks = prefs.recentBooks) }
+                refreshDirectory()
             }
         }
+    }
+
+    fun refreshDirectory() {
+        viewModelScope.launch {
+            val files = withContext(Dispatchers.IO) {
+                runCatching {
+                    settingsRepository.getSaveDirectory()
+                        .listFiles { file -> file.isFile && file.extension.equals("epub", ignoreCase = true) }
+                        ?.sortedByDescending { it.lastModified() }
+                        ?: emptyList()
+                }.getOrDefault(emptyList())
+            }
+            _uiState.update { it.copy(directoryFiles = files) }
+        }
+    }
+
+    fun importFromUri(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                withContext(Dispatchers.IO) {
+                    val saveDir = settingsRepository.getSaveDirectory()
+                    var fileName = uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+                        ?.let { if (it.endsWith(".epub", ignoreCase = true)) it else "$it.epub" }
+                        ?: "imported.epub"
+                    val target = uniqueFile(saveDir, fileName)
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        target.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    } ?: throw IllegalStateException("无法读取所选文件")
+                }
+                refreshDirectory()
+                _uiState.update { it.copy(isLoading = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
+    }
+
+    private fun uniqueFile(directory: File, name: String): File {
+        var file = File(directory, name)
+        if (!file.exists()) return file
+        val base = name.substringBeforeLast(".", name)
+        val ext = name.substringAfterLast(".", "")
+        var index = 1
+        while (file.exists()) {
+            val newName = if (ext.isBlank()) "$base ($index)" else "$base ($index).$ext"
+            file = File(directory, newName)
+            index++
+        }
+        return file
     }
 
     fun openFromUri(uri: Uri) {
@@ -146,6 +201,7 @@ data class HomeUiState(
     val openedBook: EpubBook? = null,
     val error: String? = null,
     val recentBooks: List<RecentBook> = emptyList(),
+    val directoryFiles: List<File> = emptyList(),
     val selectionMode: Boolean = false,
     val selectedIds: Set<String> = emptySet()
 )

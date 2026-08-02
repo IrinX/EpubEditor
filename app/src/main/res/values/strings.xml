@@ -3,22 +3,16 @@
     <string name="app_name">EPUB Editor</string>
 
     <!-- Home -->
-    <string name="home_recent">Recent</string>
-    <string name="home_open">Open</string>
+    <string name="home_directory">Directory</string>
     <string name="home_settings">Settings</string>
-    <string name="home_recent_title">Recent Projects</string>
-    <string name="home_recent_empty">No recent projects yet. Open an EPUB file to get started.</string>
-    <string name="home_recent_clear">Clear recent</string>
-    <string name="home_recent_clear_title">Clear recent projects</string>
-    <string name="home_recent_clear_message">Remove all recent projects?</string>
+    <string name="home_directory_title">Directory</string>
+    <string name="home_directory_empty">No EPUB files yet. Tap the + button to import.</string>
+    <string name="home_import_file">Import EPUB</string>
     <string name="home_select_mode">Select</string>
     <string name="home_select_all">Select All</string>
     <string name="home_recent_permission_lost">Permission expired. Please open the EPUB file again from the file picker.</string>
-    <string name="home_open_title">Open EPUB</string>
-    <string name="home_open_button">Select EPUB File</string>
     <string name="home_settings_title">Settings</string>
-    <string name="home_settings_desc">EPUB Editor v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
-    <string name="home_open_epub_cd">Open EPUB</string>
+    <string name="home_settings_desc">EPUB 编辑器 v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
     <string name="clear">Clear</string>
     <string name="all_files_permission_title">All files access required</string>
     <string name="all_files_permission_message">To read and save EPUB files properly, please enable "All files access" in system settings.</string>

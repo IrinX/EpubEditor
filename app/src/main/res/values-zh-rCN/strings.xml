@@ -3,22 +3,16 @@
     <string name="app_name">EPUB 编辑器</string>
 
     <!-- 首页 -->
-    <string name="home_recent">最近</string>
-    <string name="home_open">打开</string>
+    <string name="home_directory">目录</string>
     <string name="home_settings">设置</string>
-    <string name="home_recent_title">最近项目</string>
-    <string name="home_recent_empty">暂无最近项目。打开一个 EPUB 文件开始编辑。</string>
-    <string name="home_recent_clear">清空最近</string>
-    <string name="home_recent_clear_title">清空最近项目</string>
-    <string name="home_recent_clear_message">确定移除所有最近项目？</string>
+    <string name="home_directory_title">目录</string>
+    <string name="home_directory_empty">暂无 EPUB 文件。点击右下角 + 导入文件。</string>
+    <string name="home_import_file">导入 EPUB</string>
     <string name="home_select_mode">多选</string>
     <string name="home_select_all">全选</string>
     <string name="home_recent_permission_lost">文件访问权限已过期，请重新从文件选择器中打开该 EPUB 文件。</string>
-    <string name="home_open_title">打开 EPUB</string>
-    <string name="home_open_button">选择 EPUB 文件</string>
     <string name="home_settings_title">设置</string>
     <string name="home_settings_desc">EPUB 编辑器 v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
-    <string name="home_open_epub_cd">打开 EPUB</string>
     <string name="clear">清空</string>
     <string name="all_files_permission_title">需要所有文件访问权限</string>
     <string name="all_files_permission_message">为了正常读取和保存 EPUB 文件，请前往系统设置开启“所有文件访问权限”。</string>

@@ -61,6 +61,11 @@ class EpubRepository @Inject constructor(
             return@withContext SaveResult(writer.write(book, file))
         }
 
+        val sourceFile = book.sourceFile
+        if (sourceFile != null && sourceFile.exists()) {
+            return@withContext SaveResult(writer.write(book, sourceFile))
+        }
+
         val saveDir = settingsRepository.getSaveDirectory()
         val fileName = book.opf.metadata.title
             .takeIf { it.isNotBlank() }

@@ -19,23 +19,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ClearAll
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -54,16 +46,12 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.epubeditor.R
 import com.example.epubeditor.data.epub.model.EpubBook
-import com.example.epubeditor.data.repository.RecentBook
 import com.example.epubeditor.ui.components.LoadingOverlay
 import com.example.epubeditor.ui.screens.settings.SettingsScreen
 import com.example.epubeditor.ui.screens.settings.SettingsViewModel
@@ -81,10 +69,10 @@ fun HomeScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val settingsViewModel: SettingsViewModel = hiltViewModel()
 
-    val openLauncher = rememberLauncherForActivityResult(
+    val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { viewModel.openFromUri(it) }
+        uri?.let { viewModel.importFromUri(it) }
     }
 
     val context = LocalContext.current
@@ -122,27 +110,21 @@ fun HomeScreen(
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.History, contentDescription = null) },
-                    label = { Text(stringResource(R.string.home_recent)) }
+                    icon = { Icon(Icons.Default.Folder, contentDescription = null) },
+                    label = { Text(stringResource(R.string.home_directory)) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    label = { Text(stringResource(R.string.home_open)) }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                     label = { Text(stringResource(R.string.home_settings)) }
                 )
             }
         },
         floatingActionButton = {
-            if (selectedTab == 1) {
-                FloatingActionButton(onClick = { openLauncher.launch("application/epub+zip") }) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_open_epub_cd))
+            if (selectedTab == 0) {
+                FloatingActionButton(onClick = { importLauncher.launch("application/epub+zip") }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_import_file))
                 }
             }
         }
@@ -154,18 +136,11 @@ fun HomeScreen(
                 .padding(16.dp)
         ) {
             when (selectedTab) {
-                0 -> RecentTab(
-                    recentBooks = uiState.recentBooks,
-                    selectionMode = uiState.selectionMode,
-                    selectedIds = uiState.selectedIds,
-                    onOpenRecent = viewModel::openRecent,
-                    onSetSelectionMode = viewModel::setSelectionMode,
-                    onToggleSelection = viewModel::toggleSelection,
-                    onSelectAll = viewModel::selectAll,
-                    onDeleteSelected = viewModel::deleteSelectedBooks
+                0 -> DirectoryTab(
+                    files = uiState.directoryFiles,
+                    onOpenFile = { file -> viewModel.openFromFile(file) }
                 )
-                1 -> OpenTab(onOpenClick = { openLauncher.launch("application/epub+zip") })
-                2 -> SettingsScreen(viewModel = settingsViewModel)
+                1 -> SettingsScreen(viewModel = settingsViewModel)
             }
         }
     }
@@ -209,64 +184,21 @@ fun HomeScreen(
 }
 
 @Composable
-private fun RecentTab(
-    recentBooks: List<RecentBook>,
-    selectionMode: Boolean,
-    selectedIds: Set<String>,
-    onOpenRecent: (RecentBook) -> Unit,
-    onSetSelectionMode: (Boolean) -> Unit,
-    onToggleSelection: (String) -> Unit,
-    onSelectAll: () -> Unit,
-    onDeleteSelected: () -> Unit
+private fun DirectoryTab(
+    files: List<File>,
+    onOpenFile: (File) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
+            text = stringResource(R.string.home_directory_title),
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = stringResource(R.string.home_recent_title),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f)
-            )
-            if (recentBooks.isNotEmpty()) {
-                if (selectionMode) {
-                    IconButton(onClick = onSelectAll) {
-                        Icon(
-                            imageVector = Icons.Default.SelectAll,
-                            contentDescription = stringResource(R.string.home_select_all)
-                        )
-                    }
-                    IconButton(
-                        onClick = onDeleteSelected,
-                        enabled = selectedIds.isNotEmpty()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.delete)
-                        )
-                    }
-                    IconButton(onClick = { onSetSelectionMode(false) }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.cancel)
-                        )
-                    }
-                } else {
-                    IconButton(onClick = { onSetSelectionMode(true) }) {
-                        Icon(
-                            imageVector = Icons.Default.ClearAll,
-                            contentDescription = stringResource(R.string.home_select_mode)
-                        )
-                    }
-                }
-            }
-        }
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (recentBooks.isEmpty()) {
+        if (files.isEmpty()) {
             Text(
-                text = stringResource(R.string.home_recent_empty),
+                text = stringResource(R.string.home_directory_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -275,17 +207,10 @@ private fun RecentTab(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
             ) {
-                items(recentBooks, key = { it.id }) { book ->
-                    RecentBookItem(
-                        book = book,
-                        selected = selectedIds.contains(book.id),
-                        onClick = {
-                            if (selectionMode) {
-                                onToggleSelection(book.id)
-                            } else {
-                                onOpenRecent(book)
-                            }
-                        }
+                items(files, key = { it.absolutePath }) { file ->
+                    DirectoryFileItem(
+                        file = file,
+                        onClick = { onOpenFile(file) }
                     )
                 }
             }
@@ -294,24 +219,13 @@ private fun RecentTab(
 }
 
 @Composable
-private fun RecentBookItem(
-    book: RecentBook,
-    selected: Boolean,
+private fun DirectoryFileItem(
+    file: File,
     onClick: () -> Unit
 ) {
-    val coverFile = remember(book.coverPath) {
-        book.coverPath.takeIf { it.isNotBlank() }?.let { java.io.File(it).takeIf { f -> f.exists() } }
-    }
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                CardDefaults.cardColors().containerColor
-            }
-        )
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
@@ -319,26 +233,21 @@ private fun RecentBookItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            coverFile?.let { file ->
-                AsyncImage(
-                    model = file,
-                    contentDescription = stringResource(R.string.metadata_cover_cd),
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-            }
-
+            Icon(
+                imageVector = Icons.Default.Folder,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = book.title,
+                    text = file.nameWithoutExtension,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = formatRecentDate(book.openedAt),
+                    text = formatFileDate(file.lastModified()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -347,24 +256,7 @@ private fun RecentBookItem(
     }
 }
 
-private fun formatRecentDate(timestamp: Long): String {
+private fun formatFileDate(timestamp: Long): String {
     return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         .format(Date(timestamp))
-}
-
-@Composable
-private fun OpenTab(onOpenClick: () -> Unit) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = stringResource(R.string.home_open_title),
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onOpenClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.home_open_button))
-        }
-    }
 }
