@@ -8,6 +8,11 @@ import android.os.Environment
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,6 +59,10 @@ import androidx.core.content.ContextCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -79,6 +88,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
+    var isHomeFabVisible by remember { mutableStateOf(true) }
     val settingsViewModel: SettingsViewModel = hiltViewModel()
 
     val importLauncher = rememberLauncherForActivityResult(
@@ -135,8 +145,14 @@ fun HomeScreen(
         },
         floatingActionButton = {
             if (selectedTab == 0) {
-                FloatingActionButton(onClick = { importLauncher.launch("application/epub+zip") }) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_import_file))
+                AnimatedVisibility(
+                    visible = isHomeFabVisible,
+                    enter = slideInVertically(initialOffsetY = { it * 2 }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut()
+                ) {
+                    FloatingActionButton(onClick = { importLauncher.launch("application/epub+zip") }) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_import_file))
+                    }
                 }
             }
         }
@@ -156,7 +172,8 @@ fun HomeScreen(
                     onSetSelectionMode = viewModel::setSelectionMode,
                     onToggleSelection = viewModel::toggleSelection,
                     onSelectAll = viewModel::selectAll,
-                    onDeleteSelected = viewModel::deleteSelectedBooks
+                    onDeleteSelected = viewModel::deleteSelectedBooks,
+                    onFabVisibilityChanged = { isHomeFabVisible = it }
                 )
                 1 -> SettingsScreen(viewModel = settingsViewModel)
             }
@@ -210,8 +227,22 @@ private fun DirectoryTab(
     onSetSelectionMode: (Boolean) -> Unit,
     onToggleSelection: (String) -> Unit,
     onSelectAll: () -> Unit,
-    onDeleteSelected: () -> Unit
+    onDeleteSelected: () -> Unit,
+    onFabVisibilityChanged: (Boolean) -> Unit = {}
 ) {
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < -30) {
+                    onFabVisibilityChanged(false)
+                } else if (available.y > 30) {
+                    onFabVisibilityChanged(true)
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -265,7 +296,9 @@ private fun DirectoryTab(
             )
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(nestedScrollConnection),
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
             ) {
                 items(books, key = { it.file.absolutePath }) { book ->
