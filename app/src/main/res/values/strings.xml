@@ -20,6 +20,9 @@
     <string name="home_settings_desc">EPUB Editor v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
     <string name="home_open_epub_cd">Open EPUB</string>
     <string name="clear">Clear</string>
+    <string name="all_files_permission_title">All files access required</string>
+    <string name="all_files_permission_message">To read and save EPUB files properly, please enable "All files access" in system settings.</string>
+    <string name="open_settings">Open Settings</string>
 
     <!-- Settings -->
     <string name="settings_appearance">Appearance</string>

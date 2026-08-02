@@ -20,6 +20,9 @@
     <string name="home_settings_desc">EPUB 编辑器 v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
     <string name="home_open_epub_cd">打开 EPUB</string>
     <string name="clear">清空</string>
+    <string name="all_files_permission_title">需要所有文件访问权限</string>
+    <string name="all_files_permission_message">为了正常读取和保存 EPUB 文件，请前往系统设置开启“所有文件访问权限”。</string>
+    <string name="open_settings">去设置</string>
 
     <!-- 设置 -->
     <string name="settings_appearance">外观</string>
