@@ -1,5 +1,9 @@
 package com.example.epubeditor.util
 
 fun String.sanitizeFileName(): String {
-    return this.replace(Regex("[^a-zA-Z0-9\\-_.]"), "_").take(100)
+    // Keep letters/digits/spaces/punctuation across all languages; only strip reserved path chars.
+    return this.replace(Regex("[\\\\/:*?\"<>|]"), "_")
+        .trim()
+        .trimEnd('.', ' ')
+        .take(120)
 }
