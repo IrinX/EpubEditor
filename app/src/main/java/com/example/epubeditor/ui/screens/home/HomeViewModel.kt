@@ -109,7 +109,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun setSelectionMode(enabled: Boolean) {
-        _uiState.update { it.copy(selectionMode = enabled, selectedIds = if (enabled) emptySet() else it.selectedIds) }
+        _uiState.update { it.copy(selectionMode = enabled, selectedIds = emptySet()) }
     }
 
     fun toggleSelection(id: String) {
