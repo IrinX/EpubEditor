@@ -136,28 +136,28 @@ fun AssetManagerTab(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            } else {
-                groups.forEach { group ->
-                    if (group.items.isNotEmpty()) {
-                        item(key = "header_${group.titleRes}") {
-                            SectionHeader(
-                                title = stringResource(group.titleRes),
-                                count = group.items.size
-                            )
-                        }
-                        items(group.items, key = { it.id }) { item ->
-                            val file = remember(item.href) { book.resolve(item.href).takeIf { it.exists() } }
-                            AssetItem(
-                                item = item,
-                                file = file,
-                                onPreview = { file?.let { previewFile = it } },
-                                onRename = {
-                                    renameItem = item
-                                    newName = item.href.substringAfterLast("/")
-                                },
-                                onDelete = { viewModel.deleteAsset(item) }
-                            )
-                        }
+            }
+
+            groups.forEach { group ->
+                item(key = "header_${group.titleRes}") {
+                    SectionHeader(
+                        title = stringResource(group.titleRes),
+                        count = group.items.size
+                    )
+                }
+                if (group.items.isNotEmpty()) {
+                    items(group.items, key = { it.id }) { item ->
+                        val file = remember(item.href) { book.resolve(item.href).takeIf { it.exists() } }
+                        AssetItem(
+                            item = item,
+                            file = file,
+                            onPreview = { file?.let { previewFile = it } },
+                            onRename = {
+                                renameItem = item
+                                newName = item.href.substringAfterLast("/")
+                            },
+                            onDelete = { viewModel.deleteAsset(item) }
+                        )
                     }
                 }
             }
@@ -268,9 +268,12 @@ fun AssetManagerTab(
                                 showCreateMetadataDialog = false
                                 viewModel.createTitlePageAsset()
                             }
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = 16.dp, horizontal = 4.dp)
                     ) {
-                        Text(stringResource(R.string.assets_create_metadata_titlepage))
+                        Text(
+                            text = stringResource(R.string.assets_create_metadata_titlepage),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -280,9 +283,12 @@ fun AssetManagerTab(
                                 showCreateMetadataDialog = false
                                 showCreateMetadataOtherDialog = true
                             }
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = 16.dp, horizontal = 4.dp)
                     ) {
-                        Text(stringResource(R.string.assets_create_metadata_other))
+                        Text(
+                            text = stringResource(R.string.assets_create_metadata_other),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             },
@@ -380,9 +386,12 @@ private fun CategorySelectionDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onSelect(category) }
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = 16.dp, horizontal = 4.dp)
                     ) {
-                        Text(text = stringResource(categoryLabelRes(category)))
+                        Text(
+                            text = stringResource(categoryLabelRes(category)),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }
@@ -415,9 +424,12 @@ private fun ActionSelectionDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onCreate() }
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = 16.dp, horizontal = 4.dp)
                     ) {
-                        Text(stringResource(R.string.assets_select_category_create))
+                        Text(
+                            text = stringResource(R.string.assets_select_category_create),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
                 Row(
@@ -425,9 +437,12 @@ private fun ActionSelectionDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onImport() }
-                        .padding(vertical = 12.dp)
+                        .padding(vertical = 16.dp, horizontal = 4.dp)
                 ) {
-                    Text(stringResource(R.string.assets_select_category_import))
+                    Text(
+                        text = stringResource(R.string.assets_select_category_import),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
             }
         },
