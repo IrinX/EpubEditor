@@ -87,7 +87,7 @@ class HomeViewModel @Inject constructor(
                         target.outputStream().use { output ->
                             input.copyTo(output)
                         }
-                    } ?: throw IllegalStateException("无法读取所选文件")
+                    } ?: throw IllegalStateException(context.getString(R.string.error_cannot_read_file))
                 }
                 refreshDirectory()
                 _uiState.update { it.copy(isLoading = false) }
@@ -145,7 +145,7 @@ class HomeViewModel @Inject constructor(
                 val book = when {
                     recent.internalPath.isNotBlank() -> {
                         val file = File(recent.internalPath)
-                        if (!file.exists()) throw IllegalArgumentException("文件不存在: ${recent.internalPath}")
+                        if (!file.exists()) throw IllegalArgumentException(context.getString(R.string.error_file_not_found, recent.internalPath))
                         val originalUri = recent.originalUri.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
                         repository.openFromFile(file, bookId = recent.id, originalUri = originalUri)
                     }
@@ -155,7 +155,7 @@ class HomeViewModel @Inject constructor(
                     else -> {
                         val path = recent.uri.removePrefix("file://")
                         val file = File(path)
-                        if (!file.exists()) throw IllegalArgumentException("文件不存在: ${recent.uri}")
+                        if (!file.exists()) throw IllegalArgumentException(context.getString(R.string.error_file_not_found, recent.uri))
                         repository.openFromFile(file, bookId = recent.id)
                     }
                 }

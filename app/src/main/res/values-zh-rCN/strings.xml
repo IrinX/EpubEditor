@@ -61,10 +61,14 @@
     <string name="editor_export_cd">另存为 EPUB</string>
     <string name="editor_saved_title">已保存</string>
     <string name="editor_saved_message">EPUB 保存成功。</string>
+    <string name="editor_saved_exported_message">已另存为：\n%1$s</string>
+    <string name="editor_saved_to_message">已保存到：\n%1$s</string>
     <string name="editor_saved_fallback_message">原文件权限已过期，已保存到应用导出目录。如需覆盖原文件，请重新从文件选择器打开。</string>
 
     <!-- 通用 -->
     <string name="error_title">错误</string>
+    <string name="error_cannot_read_file">无法读取所选文件</string>
+    <string name="error_file_not_found">文件不存在：%1$s</string>
     <string name="ok">确定</string>
     <string name="cancel">取消</string>
     <string name="close">关闭</string>

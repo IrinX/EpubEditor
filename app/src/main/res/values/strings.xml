@@ -12,7 +12,7 @@
     <string name="home_select_all">Select All</string>
     <string name="home_recent_permission_lost">Permission expired. Please open the EPUB file again from the file picker.</string>
     <string name="home_settings_title">Settings</string>
-    <string name="home_settings_desc">EPUB 编辑器 v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
+    <string name="home_settings_desc">EPUB Editor v1.0.0\nMaterial Design 3 • Kotlin • Jetpack Compose</string>
     <string name="clear">Clear</string>
     <string name="all_files_permission_title">All files access required</string>
     <string name="all_files_permission_message">To read and save EPUB files properly, please enable "All files access" in system settings.</string>
@@ -61,10 +61,14 @@
     <string name="editor_export_cd">Save As EPUB</string>
     <string name="editor_saved_title">Saved</string>
     <string name="editor_saved_message">EPUB saved successfully.</string>
+    <string name="editor_saved_exported_message">Saved as:\n%1$s</string>
+    <string name="editor_saved_to_message">Saved to:\n%1$s</string>
     <string name="editor_saved_fallback_message">Original file permission expired. EPUB saved to app export directory. Re-open the original file from picker to overwrite it.</string>
 
     <!-- Common -->
     <string name="error_title">Error</string>
+    <string name="error_cannot_read_file">Cannot read selected file</string>
+    <string name="error_file_not_found">File not found: %1$s</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
