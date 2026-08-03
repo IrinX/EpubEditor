@@ -136,28 +136,28 @@ fun AssetManagerTab(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-
-            groups.forEach { group ->
-                item(key = "header_${group.titleRes}") {
-                    SectionHeader(
-                        title = stringResource(group.titleRes),
-                        count = group.items.size
-                    )
-                }
-                if (group.items.isNotEmpty()) {
-                    items(group.items, key = { it.id }) { item ->
-                        val file = remember(item.href) { book.resolve(item.href).takeIf { it.exists() } }
-                        AssetItem(
-                            item = item,
-                            file = file,
-                            onPreview = { file?.let { previewFile = it } },
-                            onRename = {
-                                renameItem = item
-                                newName = item.href.substringAfterLast("/")
-                            },
-                            onDelete = { viewModel.deleteAsset(item) }
-                        )
+            } else {
+                groups.forEach { group ->
+                    if (group.items.isNotEmpty()) {
+                        item(key = "header_${group.titleRes}") {
+                            SectionHeader(
+                                title = stringResource(group.titleRes),
+                                count = group.items.size
+                            )
+                        }
+                        items(group.items, key = { it.id }) { item ->
+                            val file = remember(item.href) { book.resolve(item.href).takeIf { it.exists() } }
+                            AssetItem(
+                                item = item,
+                                file = file,
+                                onPreview = { file?.let { previewFile = it } },
+                                onRename = {
+                                    renameItem = item
+                                    newName = item.href.substringAfterLast("/")
+                                },
+                                onDelete = { viewModel.deleteAsset(item) }
+                            )
+                        }
                     }
                 }
             }
