@@ -2,8 +2,6 @@ package com.example.epubeditor.data.repository
 
 import android.content.Context
 import android.net.Uri
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -78,7 +76,6 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setLanguage(language: AppLanguage) {
         dataStore.edit { it[Keys.LANGUAGE] = language.name }
-        applyLanguage(language)
     }
 
     suspend fun setSavePath(path: String) {
@@ -123,15 +120,6 @@ class SettingsRepository @Inject constructor(
 
     suspend fun saveRecentBooks(books: List<RecentBook>) {
         dataStore.edit { it[Keys.RECENT_BOOKS] = Json.encodeToString(books.take(MAX_RECENT)) }
-    }
-
-    fun applyLanguage(language: AppLanguage) {
-        val locales = when (language) {
-            AppLanguage.SYSTEM -> LocaleListCompat.getEmptyLocaleList()
-            AppLanguage.ENGLISH -> LocaleListCompat.forLanguageTags("en")
-            AppLanguage.CHINESE -> LocaleListCompat.forLanguageTags("zh-CN")
-        }
-        AppCompatDelegate.setApplicationLocales(locales)
     }
 
     private fun parseRecentBooks(json: String?): List<RecentBook> {
