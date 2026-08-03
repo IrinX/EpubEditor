@@ -11,22 +11,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ClearAll
-import androidx.compose.material.icons.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.FormatItalic
-import androidx.compose.material.icons.filled.HorizontalSplit
-import androidx.compose.material.icons.filled.MergeType
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FindReplace
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.HorizontalSplit
+import androidx.compose.material.icons.filled.MergeType
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -303,23 +306,51 @@ private fun ChapterSelector(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(2.dp))
-        Button(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(displayText)
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            book.opf.spine.forEach { id ->
-                val item = book.opf.manifest.find { it.id == id } ?: return@forEach
-                DropdownMenuItem(
-                    text = { Text(item.href) },
-                    onClick = {
-                        viewModel.selectChapter(item.id)
-                        expanded = false
-                    }
-                )
+        Spacer(modifier = Modifier.height(4.dp))
+        Box {
+            OutlinedButton(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RectangleShape
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = displayText,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.ArrowDropDown,
+                        contentDescription = null
+                    )
+                }
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                book.opf.spine.forEach { id ->
+                    val item = book.opf.manifest.find { it.id == id } ?: return@forEach
+                    val isSelected = item.id == uiState.selectedChapterId
+                    DropdownMenuItem(
+                        text = { Text(item.href) },
+                        leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null
+                                )
+                            }
+                        } else null,
+                        onClick = {
+                            viewModel.selectChapter(item.id)
+                            expanded = false
+                        }
+                    )
+                }
             }
         }
     }
