@@ -123,6 +123,18 @@
     <string name="assets_cleaned">已清理未引用资源</string>
     <string name="assets_rename_title">重命名资源</string>
     <string name="assets_new_name_hint">新文件名</string>
+    <string name="assets_select_category_title">添加到分类</string>
+    <string name="assets_select_category_create">创建</string>
+    <string name="assets_select_category_import">导入</string>
+    <string name="assets_create_text_title">创建文本文件</string>
+    <string name="assets_create_text_hint">文件名（.html）</string>
+    <string name="assets_create_metadata_title">创建元数据文件</string>
+    <string name="assets_create_metadata_titlepage">创建 titlepage.xhtml</string>
+    <string name="assets_create_metadata_other">创建其他文件</string>
+    <string name="assets_create_metadata_other_hint">带后缀的文件名</string>
+    <string name="error_file_extension_required">文件名必须包含后缀</string>
+    <string name="error_text_file_html_only">文本资源只能导入 .html/.xhtml/.htm 文件</string>
+    <string name="error_image_file_only">图片资源只能导入图片文件</string>
 
     <!-- HTML 编辑器 -->
     <string name="html_current_chapter">当前章节</string>

@@ -13,6 +13,7 @@ import com.example.epubeditor.data.epub.model.EpubBook
 import com.example.epubeditor.data.epub.model.EpubMetadata
 import com.example.epubeditor.data.epub.model.ManifestItem
 import com.example.epubeditor.data.epub.model.NavPoint
+import com.example.epubeditor.ui.screens.editor.tabs.AssetCategory
 import com.example.epubeditor.data.repository.EpubRepository
 import com.example.epubeditor.util.sanitizeFileName
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -436,7 +437,87 @@ $bodyContent
 
     //region Assets
 
-    fun addAssetFromUri(uri: Uri, fileName: String) {
+    fun importAssetToCategory(uri: Uri, fileName: String, category: AssetCategory) {
+        when (category) {
+            AssetCategory.TEXT -> {
+                val ext = fileName.substringAfterLast(".", "").lowercase()
+                if (ext !in listOf("html", "htm", "xhtml")) {
+                    _uiState.update { it.copy(error = context.getString(R.string.error_text_file_html_only)) }
+                    return
+                }
+                importAssetToFolder(uri, fileName, "text")
+            }
+            AssetCategory.IMAGES -> {
+                val mediaType = guessMediaType(fileName)
+                if (!mediaType.startsWith("image/")) {
+                    _uiState.update { it.copy(error = context.getString(R.string.error_image_file_only)) }
+                    return
+                }
+                importAssetToFolder(uri, fileName, "images")
+            }
+            AssetCategory.STYLES -> importAssetToFolder(uri, fileName, "styles")
+            AssetCategory.METADATA -> importAssetToFolder(uri, fileName, "")
+            AssetCategory.OTHER -> importAssetToFolder(uri, fileName, "misc")
+        }
+    }
+
+    fun createTextAsset(name: String) {
+        val baseName = name.trim().sanitizeFileName()
+            .removeSuffix(".html")
+            .removeSuffix(".xhtml")
+            .removeSuffix(".htm")
+        if (baseName.isBlank()) return
+        createAssetFile("text", "$baseName.html", "", "application/xhtml+xml")
+    }
+
+    fun createTitlePageAsset() {
+        val content = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Title Page</title>
+  </head>
+  <body>
+    <h1>Title Page</h1>
+  </body>
+</html>"""
+        createAssetFile("", "titlepage.xhtml", content, "application/xhtml+xml")
+    }
+
+    fun createMetadataFile(fileName: String) {
+        val sanitized = fileName.trim().sanitizeFileName()
+        if (!sanitized.contains(".")) {
+            _uiState.update { it.copy(error = context.getString(R.string.error_file_extension_required)) }
+            return
+        }
+        createAssetFile("", sanitized, "", guessMediaType(sanitized))
+    }
+
+    private fun createAssetFile(folder: String, fileName: String, content: String, mediaType: String) {
+        val current = _book ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            try {
+                withContext(Dispatchers.IO) {
+                    val assetFile = if (folder.isBlank()) {
+                        File(current.baseDir, fileName)
+                    } else {
+                        File(current.baseDir, "$folder/$fileName")
+                    }
+                    assetFile.parentFile?.mkdirs()
+                    assetFile.writeText(content, Charsets.UTF_8)
+                    val relative = current.relativize(assetFile)
+                    val id = "asset_${UUID.randomUUID().toString().take(8)}"
+                    current.opf.manifest.add(ManifestItem(id, relative, mediaType))
+                }
+                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
+    }
+
+    private fun importAssetToFolder(uri: Uri, fileName: String, folder: String) {
         val current = _book ?: return
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -444,15 +525,11 @@ $bodyContent
                 withContext(Dispatchers.IO) {
                     val sanitized = fileName.sanitizeFileName()
                     val mediaType = guessMediaType(fileName)
-                    val folder = when {
-                        mediaType == "text/css" -> "styles"
-                        mediaType.startsWith("image/") -> "images"
-                        mediaType.startsWith("font/") -> "fonts"
-                        mediaType.startsWith("audio/") -> "audio"
-                        mediaType.startsWith("video/") -> "video"
-                        else -> "misc"
+                    val assetFile = if (folder.isBlank()) {
+                        File(current.baseDir, sanitized)
+                    } else {
+                        File(current.baseDir, "$folder/$sanitized")
                     }
-                    val assetFile = File(current.baseDir, "$folder/$sanitized")
                     assetFile.parentFile?.mkdirs()
                     context.contentResolver.openInputStream(uri)?.use { input ->
                         FileOutputStream(assetFile).use { output ->

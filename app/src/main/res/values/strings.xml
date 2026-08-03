@@ -123,6 +123,18 @@
     <string name="assets_cleaned">Cleaned unused assets</string>
     <string name="assets_rename_title">Rename Asset</string>
     <string name="assets_new_name_hint">New file name</string>
+    <string name="assets_select_category_title">Add to category</string>
+    <string name="assets_select_category_create">Create</string>
+    <string name="assets_select_category_import">Import</string>
+    <string name="assets_create_text_title">Create Text File</string>
+    <string name="assets_create_text_hint">File name (.html)</string>
+    <string name="assets_create_metadata_title">Create Metadata File</string>
+    <string name="assets_create_metadata_titlepage">Create titlepage.xhtml</string>
+    <string name="assets_create_metadata_other">Create other file</string>
+    <string name="assets_create_metadata_other_hint">File name with extension</string>
+    <string name="error_file_extension_required">File name must include an extension</string>
+    <string name="error_text_file_html_only">Text resources can only import .html/.xhtml/.htm files</string>
+    <string name="error_image_file_only">Image resources can only import image files</string>
 
     <!-- HTML Editor -->
     <string name="html_current_chapter">Current chapter</string>

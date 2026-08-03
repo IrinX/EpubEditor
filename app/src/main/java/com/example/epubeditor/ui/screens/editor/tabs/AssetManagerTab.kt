@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,7 +52,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.clickable
 import coil.compose.AsyncImage
 import com.example.epubeditor.R
 import com.example.epubeditor.data.epub.model.ManifestItem
@@ -71,13 +71,26 @@ fun AssetManagerTab(
     var previewFile by remember { mutableStateOf<java.io.File?>(null) }
     var isFabVisible by remember { mutableStateOf(true) }
 
-    val addLauncher = rememberLauncherForActivityResult(
+    var showCategoryDialog by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf<AssetCategory?>(null) }
+    var showActionDialog by remember { mutableStateOf(false) }
+    var showCreateTextDialog by remember { mutableStateOf(false) }
+    var showCreateMetadataDialog by remember { mutableStateOf(false) }
+    var showCreateMetadataOtherDialog by remember { mutableStateOf(false) }
+    var textFileName by remember { mutableStateOf("") }
+    var metadataOtherFileName by remember { mutableStateOf("") }
+    var pendingImportCategory by remember { mutableStateOf<AssetCategory?>(null) }
+
+    val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             val name = getFileNameFromUri(context, it) ?: "asset_${System.currentTimeMillis()}"
-            viewModel.addAssetFromUri(it, name)
+            pendingImportCategory?.let { category ->
+                viewModel.importAssetToCategory(it, name, category)
+            }
         }
+        pendingImportCategory = null
     }
 
     val nestedScrollConnection = remember {
@@ -157,7 +170,7 @@ fun AssetManagerTab(
             modifier = Modifier.align(Alignment.BottomEnd)
         ) {
             FloatingActionButton(
-                onClick = { addLauncher.launch("*/*") },
+                onClick = { showCategoryDialog = true },
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
                 Icon(
@@ -166,6 +179,155 @@ fun AssetManagerTab(
                 )
             }
         }
+    }
+
+    if (showCategoryDialog) {
+        CategorySelectionDialog(
+            onSelect = { category ->
+                selectedCategory = category
+                showCategoryDialog = false
+                showActionDialog = true
+            },
+            onDismiss = { showCategoryDialog = false }
+        )
+    }
+
+    if (showActionDialog) {
+        val category = selectedCategory
+        ActionSelectionDialog(
+            category = category,
+            onCreate = {
+                showActionDialog = false
+                when (category) {
+                    AssetCategory.TEXT -> showCreateTextDialog = true
+                    AssetCategory.METADATA -> showCreateMetadataDialog = true
+                    else -> {}
+                }
+            },
+            onImport = {
+                showActionDialog = false
+                category?.let {
+                    pendingImportCategory = it
+                    val mime = when (it) {
+                        AssetCategory.IMAGES -> "image/*"
+                        else -> "*/*"
+                    }
+                    importLauncher.launch(mime)
+                }
+            },
+            onDismiss = { showActionDialog = false }
+        )
+    }
+
+    if (showCreateTextDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateTextDialog = false },
+            title = { Text(stringResource(R.string.assets_create_text_title)) },
+            text = {
+                OutlinedTextField(
+                    value = textFileName,
+                    onValueChange = { textFileName = it },
+                    label = { Text(stringResource(R.string.assets_create_text_hint)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.createTextAsset(textFileName)
+                        textFileName = ""
+                        showCreateTextDialog = false
+                    },
+                    enabled = textFileName.isNotBlank()
+                ) {
+                    Text(stringResource(R.string.add))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    textFileName = ""
+                    showCreateTextDialog = false
+                }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showCreateMetadataDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateMetadataDialog = false },
+            title = { Text(stringResource(R.string.assets_create_metadata_title)) },
+            text = {
+                Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showCreateMetadataDialog = false
+                                viewModel.createTitlePageAsset()
+                            }
+                            .padding(vertical = 12.dp)
+                    ) {
+                        Text(stringResource(R.string.assets_create_metadata_titlepage))
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showCreateMetadataDialog = false
+                                showCreateMetadataOtherDialog = true
+                            }
+                            .padding(vertical = 12.dp)
+                    ) {
+                        Text(stringResource(R.string.assets_create_metadata_other))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showCreateMetadataDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showCreateMetadataOtherDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateMetadataOtherDialog = false },
+            title = { Text(stringResource(R.string.assets_create_metadata_other)) },
+            text = {
+                OutlinedTextField(
+                    value = metadataOtherFileName,
+                    onValueChange = { metadataOtherFileName = it },
+                    label = { Text(stringResource(R.string.assets_create_metadata_other_hint)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.createMetadataFile(metadataOtherFileName)
+                        metadataOtherFileName = ""
+                        showCreateMetadataOtherDialog = false
+                    },
+                    enabled = metadataOtherFileName.isNotBlank()
+                ) {
+                    Text(stringResource(R.string.add))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    metadataOtherFileName = ""
+                    showCreateMetadataOtherDialog = false
+                }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     if (renameItem != null) {
@@ -199,6 +361,93 @@ fun AssetManagerTab(
         imageFile = previewFile,
         onDismiss = { previewFile = null }
     )
+}
+
+@Composable
+private fun CategorySelectionDialog(
+    onSelect: (AssetCategory) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val categories = AssetCategory.entries
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.assets_select_category_title)) },
+        text = {
+            Column {
+                categories.forEach { category ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(category) }
+                            .padding(vertical = 12.dp)
+                    ) {
+                        Text(text = stringResource(categoryLabelRes(category)))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun ActionSelectionDialog(
+    category: AssetCategory?,
+    onCreate: () -> Unit,
+    onImport: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val canCreate = category == AssetCategory.TEXT || category == AssetCategory.METADATA
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(category?.let { stringResource(categoryLabelRes(it)) } ?: "") },
+        text = {
+            Column {
+                if (canCreate) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onCreate() }
+                            .padding(vertical = 12.dp)
+                    ) {
+                        Text(stringResource(R.string.assets_select_category_create))
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onImport() }
+                        .padding(vertical = 12.dp)
+                ) {
+                    Text(stringResource(R.string.assets_select_category_import))
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+private fun categoryLabelRes(category: AssetCategory): Int {
+    return when (category) {
+        AssetCategory.METADATA -> R.string.assets_metadata
+        AssetCategory.TEXT -> R.string.assets_text
+        AssetCategory.IMAGES -> R.string.assets_images
+        AssetCategory.STYLES -> R.string.assets_styles
+        AssetCategory.OTHER -> R.string.assets_other
+    }
 }
 
 @Composable
@@ -272,7 +521,7 @@ private data class AssetGroup(
     val items: List<ManifestItem>
 )
 
-private enum class AssetCategory {
+enum class AssetCategory {
     METADATA, TEXT, IMAGES, STYLES, OTHER
 }
 
