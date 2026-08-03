@@ -169,28 +169,58 @@ class EditorViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                withContext(Dispatchers.IO) {
-                    val fileName = "cover_${System.currentTimeMillis()}.jpg"
-                    val coverFile = File(current.baseDir, "images/$fileName")
-                    coverFile.parentFile?.mkdirs()
-                    current.opf.metadata.coverManifestId?.let { oldId ->
-                        current.opf.manifest.find { it.id == oldId }?.let { oldItem ->
-                            val oldFile = current.resolve(oldItem.href)
-                            if (oldFile.exists()) oldFile.delete()
-                            current.opf.manifest.removeAll { it.id == oldId }
-                        }
+                val (oldItem, oldBackupFile, newImageBytes) = withContext(Dispatchers.IO) {
+                    val oldCoverId = current.opf.metadata.coverManifestId
+                    val oldItem = oldCoverId?.let { current.opf.manifest.find { item -> item.id == it } }?.copy()
+                    val oldBackupFile = oldItem?.let { item ->
+                        val oldFile = current.resolve(item.href)
+                        if (oldFile.exists()) {
+                            val backup = File(current.baseDir, "images/.backup_cover_${System.currentTimeMillis()}")
+                            oldFile.copyTo(backup)
+                            backup
+                        } else null
                     }
-                    context.contentResolver.openInputStream(uri)?.use { input ->
-                        FileOutputStream(coverFile).use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    val relative = current.relativize(coverFile)
-                    val coverId = "cover-image"
-                    current.opf.manifest.add(ManifestItem(coverId, relative, "image/jpeg"))
-                    current.opf.metadata.coverManifestId = coverId
+                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                        ?: throw IllegalStateException("Cannot open input stream")
+                    Triple(oldItem, oldBackupFile, bytes)
                 }
-                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1, hasUnsavedChanges = true) }
+
+                val newFileName = "cover_${System.currentTimeMillis()}.jpg"
+                val newFile = File(current.baseDir, "images/$newFileName")
+                val newItem = ManifestItem("cover-image", current.relativize(newFile), "image/jpeg")
+
+                execute(object : EditCommand {
+                    override fun execute() {
+                        newFile.parentFile?.mkdirs()
+                        newFile.writeBytes(newImageBytes)
+                        oldItem?.let { item ->
+                            val oldFile = current.resolve(item.href)
+                            if (oldFile.exists()) oldFile.delete()
+                            current.opf.manifest.removeAll { it.id == item.id }
+                        }
+                        current.opf.manifest.add(newItem)
+                        current.opf.metadata.coverManifestId = newItem.id
+                        _uiState.update { it.copy(bookVersion = it.bookVersion + 1) }
+                    }
+
+                    override fun undo() {
+                        if (newFile.exists()) newFile.delete()
+                        current.opf.manifest.removeAll { it.id == newItem.id }
+                        oldItem?.let { item ->
+                            oldBackupFile?.let { backup ->
+                                val oldFile = current.resolve(item.href)
+                                backup.copyTo(oldFile, overwrite = true)
+                            }
+                            current.opf.manifest.add(item)
+                            current.opf.metadata.coverManifestId = item.id
+                        } ?: run {
+                            current.opf.metadata.coverManifestId = null
+                        }
+                        _uiState.update { it.copy(bookVersion = it.bookVersion + 1) }
+                    }
+                })
+
+                _uiState.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
