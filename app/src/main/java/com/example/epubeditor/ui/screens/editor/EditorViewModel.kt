@@ -673,7 +673,8 @@ $bodyContent
                     it.copy(
                         isLoading = false,
                         lastSavedFile = result.file,
-                        saveFallback = result.fallback
+                        saveFallback = result.fallback,
+                        hasUnsavedChanges = false
                     )
                 }
             } catch (e: Exception) {
@@ -694,7 +695,7 @@ $bodyContent
                     } ?: throw IllegalStateException("Cannot open output stream")
                     takePersistableUriPermission(uri)
                 }
-                _uiState.update { it.copy(isLoading = false, lastExportedUri = uri) }
+                _uiState.update { it.copy(isLoading = false, lastExportedUri = uri, hasUnsavedChanges = false) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }

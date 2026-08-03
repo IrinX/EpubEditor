@@ -107,8 +107,12 @@ fun EditorScreen(
         }
     }
 
-    BackHandler(enabled = uiState.hasUnsavedChanges) {
-        showExitConfirm = true
+    BackHandler(enabled = true) {
+        if (uiState.hasUnsavedChanges) {
+            showExitConfirm = true
+        } else {
+            onBack()
+        }
     }
 
     Scaffold(
