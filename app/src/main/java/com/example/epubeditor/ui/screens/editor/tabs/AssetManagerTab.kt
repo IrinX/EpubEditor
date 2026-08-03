@@ -571,8 +571,8 @@ private fun classifyAsset(href: String): AssetCategory {
     return when {
         segments.isEmpty() -> AssetCategory.METADATA
         "text" in segments -> AssetCategory.TEXT
-        "images" in segments -> AssetCategory.IMAGES
-        "styles" in segments -> AssetCategory.STYLES
+        "images" in segments || "image" in segments -> AssetCategory.IMAGES
+        "styles" in segments || "style" in segments -> AssetCategory.STYLES
         else -> AssetCategory.OTHER
     }
 }
