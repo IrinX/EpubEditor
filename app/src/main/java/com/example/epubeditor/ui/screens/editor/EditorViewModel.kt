@@ -289,6 +289,7 @@ class EditorViewModel @Inject constructor(
     fun setChapterHtml(html: String, autoCommit: Boolean = true) {
         if (html == _currentChapterHtml.value) return
         _currentChapterHtml.value = html
+        markUnsaved()
         if (autoCommit) {
             scheduleCommit()
         }
