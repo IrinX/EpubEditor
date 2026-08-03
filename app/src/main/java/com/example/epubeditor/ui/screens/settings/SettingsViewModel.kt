@@ -9,6 +9,7 @@ import com.example.epubeditor.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,7 +28,8 @@ class SettingsViewModel @Inject constructor(
 
     fun applyInitialLanguage() {
         viewModelScope.launch {
-            repository.applyLanguage(preferences.value.language)
+            val saved = repository.preferences.first()
+            repository.applyLanguage(saved.language)
         }
     }
 
