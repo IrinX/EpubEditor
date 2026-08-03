@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.epubeditor.R
 import com.example.epubeditor.data.epub.CommandManager
 import com.example.epubeditor.data.epub.EditCommand
 import com.example.epubeditor.data.epub.EpubWriter
