@@ -306,7 +306,7 @@ private fun classifyAsset(href: String): AssetCategory {
     val segments = href.split("/").dropLast(1).map { it.lowercase() }
     return when {
         segments.isEmpty() -> AssetCategory.METADATA
-        "txt" in segments -> AssetCategory.TEXT
+        "text" in segments -> AssetCategory.TEXT
         "images" in segments -> AssetCategory.IMAGES
         "styles" in segments -> AssetCategory.STYLES
         else -> AssetCategory.OTHER
