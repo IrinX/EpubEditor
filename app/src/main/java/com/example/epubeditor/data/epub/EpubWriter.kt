@@ -32,6 +32,12 @@ class EpubWriter {
         zipBook(book, outputStream)
     }
 
+    suspend fun writeWorkingState(book: EpubBook) = withContext(Dispatchers.IO) {
+        writeOpf(book)
+        writeToc(book)
+        writeContainer(book)
+    }
+
     private fun writeOpf(book: EpubBook) {
         val opf = book.opf
         val sb = StringBuilder()

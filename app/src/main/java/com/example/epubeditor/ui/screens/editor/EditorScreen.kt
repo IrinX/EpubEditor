@@ -145,14 +145,14 @@ fun EditorScreen(
                                 text = { Text(stringResource(R.string.editor_save_all)) },
                                 onClick = {
                                     saveMenuExpanded = false
-                                    viewModel.saveBook(clearHistory = true)
+                                    viewModel.saveCurrentState()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.editor_export)) },
                                 onClick = {
                                     saveMenuExpanded = false
-                                    viewModel.saveBook(clearHistory = false)
+                                    viewModel.saveBook()
                                 }
                             )
                             DropdownMenuItem(

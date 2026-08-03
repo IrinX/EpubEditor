@@ -638,24 +638,42 @@ $bodyContent
 
     //endregion
 
-    fun saveBook(clearHistory: Boolean = false) {
+    fun saveCurrentState() {
+        val current = _book ?: return
+        commitPendingHtml()
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                withContext(Dispatchers.IO) {
+                    writer.writeWorkingState(current)
+                }
+                commandManager.clear()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        canUndo = false,
+                        canRedo = false,
+                        hasUnsavedChanges = false
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
+    }
+
+    fun saveBook() {
         val current = _book ?: return
         commitPendingHtml()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, saveFallback = false, lastExportedUri = null) }
             try {
                 val result = repository.save(current)
-                if (clearHistory) {
-                    commandManager.clear()
-                }
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         lastSavedFile = result.file,
-                        saveFallback = result.fallback,
-                        canUndo = commandManager.canUndo,
-                        canRedo = commandManager.canRedo,
-                        hasUnsavedChanges = commandManager.canUndo
+                        saveFallback = result.fallback
                     )
                 }
             } catch (e: Exception) {
