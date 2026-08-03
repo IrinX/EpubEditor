@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.MergeType
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
@@ -215,14 +214,6 @@ fun HtmlEditorTab(
             label = { Text(if (sourceMode) stringResource(R.string.html_source) else stringResource(R.string.html_visual)) }
         )
 
-        if (sourceMode) {
-            Button(
-                onClick = { viewModel.commitPendingHtml() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.save))
-            }
-        }
     }
 
     if (showClearConfirm) {
@@ -309,12 +300,6 @@ private fun ChapterSelector(
     val displayText = selectedItem?.href ?: stringResource(R.string.html_select_chapter)
 
     Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.html_current_chapter),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
         Box {
             OutlinedButton(
                 onClick = { expanded = true },

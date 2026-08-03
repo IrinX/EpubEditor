@@ -91,6 +91,7 @@ fun EditorScreen(
     val book = viewModel.book
     var showSaveSuccess by remember { mutableStateOf(false) }
     var saveMenuExpanded by remember { mutableStateOf(false) }
+    var showExitConfirm by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/epub+zip")
@@ -115,7 +116,13 @@ fun EditorScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (uiState.hasUnsavedChanges) {
+                            showExitConfirm = true
+                        } else {
+                            onBack()
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.editor_back_cd))
                     }
                 },
@@ -135,14 +142,21 @@ fun EditorScreen(
                             onDismissRequest = { saveMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.save)) },
+                                text = { Text(stringResource(R.string.editor_save_all)) },
                                 onClick = {
                                     saveMenuExpanded = false
-                                    viewModel.saveBook()
+                                    viewModel.saveBook(clearHistory = true)
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.editor_export)) },
+                                onClick = {
+                                    saveMenuExpanded = false
+                                    viewModel.saveBook(clearHistory = false)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.editor_export_to_folder)) },
                                 onClick = {
                                     saveMenuExpanded = false
                                     val defaultName = book?.opf?.metadata?.title
@@ -231,6 +245,27 @@ fun EditorScreen(
             confirmButton = {
                 TextButton(onClick = viewModel::dismissError) {
                     Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            title = { Text(stringResource(R.string.editor_unsaved_title)) },
+            text = { Text(stringResource(R.string.editor_unsaved_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showExitConfirm = false
+                    onBack()
+                }) {
+                    Text(stringResource(R.string.editor_exit))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirm = false }) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

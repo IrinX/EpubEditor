@@ -73,7 +73,8 @@ class EditorViewModel @Inject constructor(
                 isLoading = false,
                 selectedChapterId = firstChapter,
                 canUndo = false,
-                canRedo = false
+                canRedo = false,
+                hasUnsavedChanges = false
             )
         }
         _currentChapterHtml.value = currentChapterContent()
@@ -112,6 +113,11 @@ class EditorViewModel @Inject constructor(
     private fun execute(command: EditCommand) {
         commandManager.execute(command)
         updateUndoRedoState()
+        markUnsaved()
+    }
+
+    private fun markUnsaved() {
+        _uiState.update { it.copy(hasUnsavedChanges = true) }
     }
 
     //region Metadata
@@ -184,7 +190,7 @@ class EditorViewModel @Inject constructor(
                     current.opf.manifest.add(ManifestItem(coverId, relative, "image/jpeg"))
                     current.opf.metadata.coverManifestId = coverId
                 }
-                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1) }
+                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1, hasUnsavedChanges = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
@@ -511,7 +517,7 @@ $bodyContent
                     val id = "asset_${UUID.randomUUID().toString().take(8)}"
                     current.opf.manifest.add(ManifestItem(id, relative, mediaType))
                 }
-                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1) }
+                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1, hasUnsavedChanges = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
@@ -541,7 +547,7 @@ $bodyContent
                     val id = "asset_${UUID.randomUUID().toString().take(8)}"
                     current.opf.manifest.add(ManifestItem(id, relative, mediaType))
                 }
-                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1) }
+                _uiState.update { it.copy(isLoading = false, bookVersion = it.bookVersion + 1, hasUnsavedChanges = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
@@ -625,21 +631,33 @@ $bodyContent
             current.opf.manifest.removeAll { it.id == item.id }
         }
         if (count > 0) {
-            _uiState.update { it.copy(bookVersion = it.bookVersion + 1) }
+            _uiState.update { it.copy(bookVersion = it.bookVersion + 1, hasUnsavedChanges = true) }
         }
         return count
     }
 
     //endregion
 
-    fun saveBook() {
+    fun saveBook(clearHistory: Boolean = false) {
         val current = _book ?: return
         commitPendingHtml()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, saveFallback = false, lastExportedUri = null) }
             try {
                 val result = repository.save(current)
-                _uiState.update { it.copy(isLoading = false, lastSavedFile = result.file, saveFallback = result.fallback) }
+                if (clearHistory) {
+                    commandManager.clear()
+                }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        lastSavedFile = result.file,
+                        saveFallback = result.fallback,
+                        canUndo = commandManager.canUndo,
+                        canRedo = commandManager.canRedo,
+                        hasUnsavedChanges = commandManager.canUndo
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
@@ -705,6 +723,7 @@ data class EditorUiState(
     val selectedChapterId: String? = null,
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
+    val hasUnsavedChanges: Boolean = false,
     val bookVersion: Int = 0,
     val lastSavedFile: File? = null,
     val saveFallback: Boolean = false,
