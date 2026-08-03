@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Save
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
@@ -104,6 +105,10 @@ fun EditorScreen(
         if (showSuccess) {
             showSaveSuccess = true
         }
+    }
+
+    BackHandler(enabled = uiState.hasUnsavedChanges) {
+        showExitConfirm = true
     }
 
     Scaffold(
