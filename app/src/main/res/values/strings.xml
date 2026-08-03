@@ -91,6 +91,10 @@
     <!-- TOC -->
     <string name="toc_title">Table of Contents</string>
     <string name="toc_add">Add Chapter</string>
+    <string name="toc_add_fab_cd">Add chapter</string>
+    <string name="toc_add_dialog_title">Add Chapter</string>
+    <string name="toc_select_file">Select file</string>
+    <string name="toc_no_text_files">No text files available</string>
     <string name="toc_empty">No chapters available.</string>
     <string name="toc_rename_title">Rename Chapter</string>
     <string name="toc_new_title_hint">New chapter title</string>

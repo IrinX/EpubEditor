@@ -91,6 +91,10 @@
     <!-- 目录 -->
     <string name="toc_title">目录</string>
     <string name="toc_add">添加章节</string>
+    <string name="toc_add_fab_cd">添加章节</string>
+    <string name="toc_add_dialog_title">添加章节</string>
+    <string name="toc_select_file">选择文件</string>
+    <string name="toc_no_text_files">没有可用的文本文件</string>
     <string name="toc_empty">暂无章节。</string>
     <string name="toc_rename_title">重命名章节</string>
     <string name="toc_new_title_hint">新章节标题</string>
