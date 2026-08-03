@@ -35,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +65,7 @@ fun AssetManagerTab(
 ) {
     val book = viewModel.book ?: return
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
     var renameItem by remember { mutableStateOf<ManifestItem?>(null) }
     var newName by remember { mutableStateOf("") }
     var previewFile by remember { mutableStateOf<java.io.File?>(null) }
@@ -91,7 +93,7 @@ fun AssetManagerTab(
         }
     }
 
-    val groups = remember(book.opf.manifest) { categorizeAssets(book.opf.manifest) }
+    val groups = remember(book.opf.manifest, uiState.bookVersion) { categorizeAssets(book.opf.manifest) }
     val hasAnyAssets = groups.any { it.items.isNotEmpty() }
 
     Box(
