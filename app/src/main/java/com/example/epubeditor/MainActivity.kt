@@ -3,10 +3,11 @@ package com.example.epubeditor
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.ContextThemeWrapper
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.example.epubeditor.R
 import com.example.epubeditor.data.repository.AppLanguage
 import com.example.epubeditor.data.repository.DarkMode
 import com.example.epubeditor.ui.navigation.EpubNavHost
@@ -26,7 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     private val settingsViewModel: SettingsViewModel by viewModels()
 
@@ -70,5 +72,7 @@ class MainActivity : AppCompatActivity() {
 private fun Context.withLocale(locale: Locale): Context {
     val config = Configuration(resources.configuration)
     config.setLocale(locale)
-    return createConfigurationContext(config)
+    return ContextThemeWrapper(this, R.style.Theme_EpubEditor).apply {
+        applyOverrideConfiguration(config)
+    }
 }
