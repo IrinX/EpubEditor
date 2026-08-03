@@ -568,9 +568,10 @@ private fun categorizeAssets(manifest: List<ManifestItem>): List<AssetGroup> {
 
 private fun classifyAsset(href: String): AssetCategory {
     val segments = href.split("/").dropLast(1).map { it.lowercase() }
+    val textDirs = setOf("text", "xhtml", "xhtmls", "html", "htmls", "chapter", "chapters", "ops")
     return when {
         segments.isEmpty() -> AssetCategory.METADATA
-        "text" in segments -> AssetCategory.TEXT
+        segments.any { it in textDirs } -> AssetCategory.TEXT
         "images" in segments || "image" in segments -> AssetCategory.IMAGES
         "styles" in segments || "style" in segments -> AssetCategory.STYLES
         else -> AssetCategory.OTHER
