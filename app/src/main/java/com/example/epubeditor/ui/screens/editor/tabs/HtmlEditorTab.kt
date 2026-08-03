@@ -97,16 +97,22 @@ fun HtmlEditorTab(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.editor_text),
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ChapterSelector(
-            viewModel = viewModel,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stringResource(R.string.editor_text),
+                style = MaterialTheme.typography.titleLarge
+            )
+            ChapterSelector(
+                viewModel = viewModel,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .weight(1f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
